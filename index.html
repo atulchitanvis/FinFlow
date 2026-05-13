@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Finflow — Personal Finance</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -305,6 +305,126 @@ tbody tr:hover td{background:var(--bg2);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
 @keyframes countUp{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 .count-anim{animation:countUp 0.5s ease forwards;}
+
+/* ══════════════════════════════════════
+   MOBILE STYLES
+══════════════════════════════════════ */
+/* Mobile bottom nav */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border);padding:0 4px env(safe-area-inset-bottom,0px);box-shadow:0 -4px 20px rgba(0,0,0,0.08);}
+.mobile-nav-items{display:flex;align-items:flex-end;justify-content:space-around;}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px 8px;cursor:pointer;border:none;background:none;color:var(--text3);font-size:10px;font-weight:500;font-family:'DM Sans',sans-serif;min-width:48px;transition:color var(--tr);}
+.mobile-nav-item.active{color:var(--accent);}
+.mobile-nav-item.active .mobile-nav-icon{color:var(--accent);}
+.mobile-nav-icon{font-size:20px;line-height:1;}
+.mobile-nav-fab{width:54px;height:54px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(200,98,42,0.45);margin-bottom:4px;transform:translateY(-8px);transition:all var(--tr);}
+.mobile-nav-fab:active{transform:translateY(-8px) scale(0.93);}
+
+/* Mobile subpage nav (Money/Wealth/Planning sub-tabs) */
+.mobile-subnav{display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;padding:10px 16px 0;background:var(--surface);border-bottom:1px solid var(--border);scrollbar-width:none;}
+.mobile-subnav::-webkit-scrollbar{display:none;}
+.mobile-subnav-item{display:inline-flex;align-items:center;padding:8px 14px;border-radius:20px;font-size:12.5px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text2);margin-right:6px;transition:all var(--tr);}
+.mobile-subnav-item.active{background:var(--accent-light);color:var(--accent);}
+
+/* Mobile expense sheet — category pills */
+.pill-row{display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none;margin-bottom:12px;}
+.pill-row::-webkit-scrollbar{display:none;}
+.cat-pill{padding:7px 14px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);white-space:nowrap;transition:all var(--tr);flex-shrink:0;}
+.cat-pill.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+.subcat-pill{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);white-space:nowrap;transition:all var(--tr);flex-shrink:0;}
+.subcat-pill.selected{border-color:var(--blue);background:var(--blue-light);color:var(--blue);}
+
+/* Mobile amount input */
+.mobile-amount-wrap{background:var(--bg2);border-radius:var(--radius-sm);padding:16px 20px;margin-bottom:16px;text-align:center;}
+.mobile-amount-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.mobile-amount-input{font-family:var(--font-serif,serif);font-size:38px;font-weight:700;color:var(--text);background:none;border:none;outline:none;width:100%;text-align:center;letter-spacing:-1px;}
+.mobile-amount-input::placeholder{color:var(--border);}
+
+/* Mobile card list (replaces tables) */
+.mobile-card-list{display:flex;flex-direction:column;gap:8px;}
+.mobile-card-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-sm);}
+.mobile-card-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.mobile-card-body{flex:1;min-width:0;}
+.mobile-card-title{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mobile-card-sub{font-size:11.5px;color:var(--text3);margin-top:2px;}
+.mobile-card-amount{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;}
+.mobile-card-actions{display:flex;gap:6px;margin-top:10px;}
+
+/* Mobile bottom sheet modal */
+@media(max-width:768px){
+  /* Hide desktop elements */
+  .sidebar{display:none!important;}
+  .fab{display:none!important;}
+  .fab-menu{display:none!important;}
+  .main{margin-left:0!important;padding:16px 16px 80px!important;max-width:100%!important;}
+
+  /* Show mobile nav */
+  .mobile-nav{display:block;}
+  .mobile-subnav{display:block;}
+
+  /* Grid overrides */
+  .g2,.g3,.g4,.stat-grid{grid-template-columns:1fr!important;}
+  .sg-3,.sg-4{grid-template-columns:1fr 1fr!important;}
+  .form-row,.form-row3{grid-template-columns:1fr!important;}
+  .ms-row{grid-template-columns:1fr 1fr!important;}
+  .tax-layout{grid-template-columns:1fr!important;}
+  .health-layout{flex-direction:column!important;}
+  .insights-grid{grid-template-columns:1fr!important;}
+  .nw-breakdown{gap:16px!important;}
+
+  /* Tables — hide on mobile, show card list instead */
+  .table-wrap table{display:none;}
+  .mobile-card-list{display:flex;}
+
+  /* Modal — bottom sheet */
+  .modal-overlay{align-items:flex-end!important;padding:0!important;}
+  .modal{width:100%!important;max-width:100%!important;border-radius:22px 22px 0 0!important;max-height:92vh!important;padding:20px 20px 32px!important;animation:sheetUp 0.28s cubic-bezier(0.34,1.2,0.64,1)!important;}
+  .modal-wide,.modal-xl{width:100%!important;}
+  @keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+
+  /* Mobile modal handle */
+  .modal::before{content:'';display:block;width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;opacity:0.6;}
+
+  /* NW hero compact */
+  .nw-hero{padding:22px 20px!important;}
+  .nw-value{font-size:34px!important;}
+
+  /* Page header */
+  .page-header{margin-bottom:16px!important;}
+  .page-title{font-size:22px!important;}
+
+  /* Filter bars */
+  .filter-bar{flex-wrap:wrap!important;}
+
+  /* Charts hidden by default on mobile */
+  .mobile-chart-hidden{display:none;}
+
+  /* Toast above nav */
+  #ff-toast{bottom:80px!important;}
+
+  /* Stat cards 2-col */
+  .stat-grid.sg-3{grid-template-columns:1fr 1fr!important;}
+  .stat-card{padding:14px 16px!important;}
+  .stat-value{font-size:20px!important;}
+
+  /* Cal grid smaller */
+  .cal-cell{min-height:44px!important;}
+
+  /* Loan card */
+  .loan-name-row{flex-direction:column!important;gap:8px!important;}
+  .loan-meta{gap:10px!important;}
+
+  /* Section headers */
+  .section-hdr{flex-wrap:wrap!important;gap:8px!important;}
+
+  /* Mobile specific btn */
+  .btn-mobile-full{width:100%;justify-content:center;padding:13px!important;}
+}
+
+@media(max-width:380px){
+  .main{padding:12px 12px 80px!important;}
+  .nw-value{font-size:28px!important;}
+  .sg-3,.sg-4{grid-template-columns:1fr!important;}
+}
 </style>
 </head>
 <body>
@@ -354,6 +474,28 @@ tbody tr:hover td{background:var(--bg2);}
     <button class="footer-btn" onclick="toggleDark()"><span id="dark-icon">☾</span><span id="dark-label"> Dark Mode</span></button>
   </div>
 </aside>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-items">
+    <button class="mobile-nav-item active" id="mnav-dashboard" onclick="mobileNav('dashboard')">
+      <span class="mobile-nav-icon">◈</span>Home
+    </button>
+    <button class="mobile-nav-item" id="mnav-money" onclick="mobileNav('money')">
+      <span class="mobile-nav-icon">₹</span>Money
+    </button>
+    <button class="mobile-nav-fab" onclick="mobileQuickExpense()">+</button>
+    <button class="mobile-nav-item" id="mnav-wealth" onclick="mobileNav('wealth')">
+      <span class="mobile-nav-icon">◆</span>Wealth
+    </button>
+    <button class="mobile-nav-item" id="mnav-more" onclick="mobileNav('more')">
+      <span class="mobile-nav-icon">⋯</span>More
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE SUBNAV -->
+<div class="mobile-subnav" id="mobile-subnav" style="display:none;"></div>
 
 <main class="main">
 
@@ -632,6 +774,46 @@ tbody tr:hover td{background:var(--bg2);}
   <div id="goals-list"></div>
 </div>
 
+<!-- ═══ MORE (mobile settings) ═══ -->
+<div id="page-more" class="page">
+  <div class="page-header"><div><div class="page-title">Settings</div><div class="page-sub">Sync, data &amp; preferences</div></div></div>
+  <div class="card mb16">
+    <div class="section-hdr"><div class="section-title">☁ Google Drive Sync</div></div>
+    <div id="more-google-signed-out">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Sign in to sync your data across devices.</p>
+      <button class="google-btn" onclick="signInGoogle()" style="width:auto;display:inline-flex;">
+        <svg class="google-btn-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Sign in with Google
+      </button>
+    </div>
+    <div id="more-google-signed-in" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><span class="sync-dot synced" id="more-sync-dot"></span><span id="more-sync-label" style="font-size:13px;color:var(--text2);">Drive connected</span></div>
+      <div id="more-user-email" style="font-size:12px;color:var(--text3);margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;"><button class="btn btn-ghost btn-sm" onclick="syncToDrive(true)">↑ Sync Now</button><button class="btn btn-danger btn-sm" onclick="signOutGoogle()">Sign Out</button></div>
+    </div>
+  </div>
+  <div class="card mb16">
+    <div class="section-hdr"><div class="section-title">💾 Data</div></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="exportData()">↓ Export Backup</button>
+      <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="document.getElementById('import-file-more').click()">↑ Import Backup</button>
+      <input type="file" id="import-file-more" accept=".json" style="display:none;" onchange="importData(event)">
+    </div>
+  </div>
+  <div class="card mb16">
+    <div class="section-hdr"><div class="section-title">🎨 Appearance</div></div>
+    <button class="btn btn-ghost" style="justify-content:flex-start;width:100%;" onclick="toggleDark();updateMoreDarkLabel()"><span id="more-dark-icon">☾</span> <span id="more-dark-label">Dark Mode</span></button>
+  </div>
+  <div class="card mb16">
+    <div class="section-hdr"><div class="section-title">⚙ Preferences</div></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="openModal('health-settings')">🏅 Health Score Targets</button>
+      <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="openModal('tax-settings')">◧ Tax Settings</button>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:7px;padding:8px 0;"><span class="save-dot" id="more-save-dot"></span><span style="font-size:12px;color:var(--text3);" id="more-save-label">Not saved yet</span></div>
+</div>
+
 </main>
 </div>
 
@@ -742,7 +924,11 @@ tbody tr:hover td{background:var(--bg2);}
   <input type="hidden" id="exp-edit-id">
   <div class="form-row">
     <div class="form-group"><label class="form-label">Date</label><input class="form-control" type="date" id="exp-date"></div>
-    <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-control" type="number" id="exp-amount" placeholder="0" oninput="updateLoanSplit()"></div>
+    <div class="mobile-amount-wrap" id="mobile-amount-wrap" style="display:none;">
+      <div class="mobile-amount-label">Amount (₹)</div>
+      <input class="mobile-amount-input" type="number" inputmode="numeric" id="exp-amount-mobile" placeholder="0" oninput="document.getElementById('exp-amount').value=this.value;updateLoanSplit()">
+    </div>
+    <div class="form-group" id="desktop-amount-wrap"><label class="form-label">Amount (₹)</label><input class="form-control" type="number" id="exp-amount" placeholder="0" oninput="updateLoanSplit();const ma=document.getElementById('exp-amount-mobile');if(ma)ma.value=this.value;"></div>
   </div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Category</label>
@@ -1294,7 +1480,7 @@ function rolling3MonthSavingsRate(){
 }
 
 // ═══ NAVIGATION ═══
-const PAGES=['dashboard','accounts','income','expenses','recurring','investments','loans','calendar','tax','planning'];
+const PAGES=['dashboard','accounts','income','expenses','recurring','investments','loans','calendar','tax','planning','more'];
 let charts={};
 function navigate(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1302,7 +1488,7 @@ function navigate(page){
   const pg=document.getElementById('page-'+page);if(pg)pg.classList.add('active');
   const idx=PAGES.indexOf(page);
   document.querySelectorAll('.nav-item')[idx]?.classList.add('active');
-  const r={dashboard:renderDashboard,accounts:renderAccounts,income:renderIncome,expenses:renderExpenses,recurring:renderRecurring,investments:renderInvestments,loans:renderLoans,calendar:renderCalendar,tax:renderTax,planning:renderPlanning};
+  const r={dashboard:renderDashboard,accounts:renderAccounts,income:renderIncome,expenses:renderExpenses,recurring:renderRecurring,investments:renderInvestments,loans:renderLoans,calendar:renderCalendar,tax:renderTax,planning:renderPlanning,more:renderMore};
   if(r[page])r[page]();
   closeFab();
 }
@@ -1323,7 +1509,7 @@ function openModal(type,data=null){
   const pop={account:populateAccountModal,income:populateIncomeModal,expense:populateExpenseModal,investment:populateInvestmentModal,loan:populateLoanModal,'tax-settings':populateTaxSettingsModal,'health-settings':populateHealthSettingsModal,'goal':populateGoalModal,'passive-target':populatePassiveTargetModal};
   if(pop[type])pop[type](data);
 }
-function closeModal(t){document.getElementById('modal-'+t)?.classList.remove('open');}
+function closeModal(t){document.getElementById('modal-'+t)?.classList.remove('open');if(t==='expense')cleanupMobilePills();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));});
 document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay'))e.target.classList.remove('open');});
 
@@ -1597,6 +1783,13 @@ function populateExpenseModal(data){
   updateLoanLink();
   if(data?.linkedLoanId){const ls=document.getElementById('exp-loan-link');if(ls)ls.value=data.linkedLoanId;}
   if(data?.loanPrincipal){const pe=document.getElementById('exp-loan-principal');if(pe)pe.value=data.loanPrincipal;}
+  // Mobile: show big amount input, sync values
+  const isMob=window.innerWidth<=768;
+  const maw=document.getElementById('mobile-amount-wrap'),daw=document.getElementById('desktop-amount-wrap');
+  if(maw)maw.style.display=isMob?'block':'none';
+  if(daw)daw.style.display=isMob?'none':'block';
+  const mobileAmt=document.getElementById('exp-amount-mobile');
+  if(mobileAmt)mobileAmt.value=data?.amount||'';
 }
 function saveExpense(){
   const id=document.getElementById('exp-edit-id').value,isRec=document.getElementById('exp-is-recurring').checked;
@@ -1857,6 +2050,7 @@ function renderIncome(){
   if(!data.length){tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">↑</div><div class="empty-title">No income entries</div><div class="empty-sub">Log your salary, freelance, dividends and other income sources.</div><button class="btn btn-primary" onclick="openModal(\'income\')">+ Add Income</button></div></td></tr>';return;}
   const sc={Salary:'badge-blue',Bonus:'badge-gold',Freelance:'badge-green',Dividend:'badge-accent',Other:'badge-gray'};
   tbody.innerHTML=data.map(x=>{const acc=accounts.find(a=>a.id===x.account),xid=x.id;return '<tr><td>'+fmtDate(x.date)+'</td><td><span class="badge '+(sc[x.source]||'badge-gray')+'">'+x.source+'</span></td><td><strong class="positive td-mono">'+fmt(x.amount)+'</strong></td><td>'+(acc?acc.name:'—')+'</td><td class="text-sm">'+(x.notes||'—')+'</td><td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal(\'income\',incomes.find(i=>i.id===\''+xid+'\'))">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteIncome(\''+xid+'\')">Del</button></div></td></tr>';}).join('');
+  if(isMobile())renderMobileIncome();
 }
 
 // ═══ RENDER: EXPENSES ═══
@@ -1875,6 +2069,7 @@ function renderExpenses(){
     const loanBadge=x.linkedLoanId?'<span class="badge badge-blue" style="font-size:9px;margin-left:3px;">EMI</span>':'';
     return '<tr><td style="padding-left:6px;width:4px;"><div style="width:3px;height:34px;background:'+bar+';border-radius:3px;"></div></td><td>'+fmtDate(x.date)+'</td><td><span class="badge '+(cb[x.category]||'badge-gray')+'">'+x.category+'</span></td><td><div style="font-size:13px;font-weight:500;">'+x.subcategory+loanBadge+'</div>'+(x.desc?'<div class="td-sub">'+x.desc+'</div>':'')+'</td><td><strong class="negative td-mono">'+fmt(x.amount)+'</strong></td><td><span class="badge badge-gray" style="font-size:10px;">'+x.mode+'</span></td><td class="text-sm">'+(acc?acc.name:'—')+'</td><td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal(\'expense\',expenses.find(e=>e.id===\''+xid+'\'))">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteExpense(\''+xid+'\')">Del</button></div></td></tr>';
   }).join('');
+  if(isMobile())renderMobileExpenses();
 }
 
 // ═══ RENDER: RECURRING ═══
@@ -1924,6 +2119,7 @@ function renderInvestments(){
     const ppfBtns=x.type==='PPF'?'<button class="btn btn-green btn-sm" onclick="openPPFContrib(\''+xid+'\')">+ Contrib</button> <button class="btn btn-ghost btn-sm" onclick="openPPFHistory(\''+xid+'\')">History</button> ':'';
     return '<tr><td><div class="td-primary">'+x.name+txb+'</div>'+extra+'</td><td><span class="badge '+(tc2[x.type]||'badge-gray')+'">'+x.type+'</span></td><td class="td-mono">'+fmt(x.invested)+'</td><td><strong class="td-mono">'+fmt(x.lv)+'</strong>'+(isAuto?' <span class="text-xs">auto</span>':'')+'</td><td><span class="'+(r>=0?'ret-pos':'ret-neg')+'">'+(r>=0?'+':'')+pct(r)+'</span></td><td><div class="row-actions">'+ppfBtns+eb+' '+db+'</div></td></tr>';
   }).join('');
+  if(isMobile())renderMobileInvestments();
 }
 
 // ═══ RENDER: LOANS ═══
@@ -2896,6 +3092,342 @@ async function tryRestoreGoogleSession() {
   }
 }
 
+
+// ═══ MOBILE ═══
+const isMobile = () => window.innerWidth <= 768;
+
+const MOBILE_GROUPS = {
+  dashboard: ['dashboard'],
+  money: ['accounts','income','expenses','recurring'],
+  wealth: ['investments','loans'],
+  more: ['calendar','tax','planning','more']
+};
+
+const MOBILE_SUBNAV_LABELS_MORE = {
+  calendar:'Calendar', tax:'Tax', planning:'Goals', more:'Settings'
+};
+
+const MOBILE_SUBNAV_LABELS = {
+  accounts:'Accounts', income:'Income', expenses:'Expenses', recurring:'Recurring',
+  investments:'Investments', loans:'Loans',
+  calendar:'Calendar', tax:'Tax', planning:'Goals', more:'Settings'
+};
+
+let mobileGroup = 'dashboard';
+
+function mobileNav(group) {
+  if (!isMobile()) return;
+  mobileGroup = group;
+  // Update bottom nav active state
+  ['dashboard','money','wealth','more'].forEach(g => {
+    const el = document.getElementById('mnav-' + g);
+    if (el) el.classList.toggle('active', g === group);
+  });
+  // Show subnav for multi-page groups
+  const subnav = document.getElementById('mobile-subnav');
+  const pages = MOBILE_GROUPS[group] || [];
+  if (pages.length > 1) {
+    subnav.style.display = 'block';
+    subnav.innerHTML = pages.map(p =>
+      '<button class="mobile-subnav-item' + (p === pages[0] ? ' active' : '') + '" onclick="mobileSubNav(&apos;' + p + '&apos;)">' + MOBILE_SUBNAV_LABELS[p] + '</button>'
+    ).join('');
+    navigate(pages[0]);
+  } else {
+    subnav.style.display = 'none';
+    navigate(pages[0]);
+  }
+  closeFab();
+}
+
+function mobileSubNav(page) {
+  const subnav = document.getElementById('mobile-subnav');
+  if (subnav) {
+    subnav.querySelectorAll('.mobile-subnav-item').forEach(el => {
+      el.classList.toggle('active', el.textContent === MOBILE_SUBNAV_LABELS[page]);
+    });
+  }
+  navigate(page);
+}
+
+function mobileQuickExpense() {
+  // Direct to expense modal — the core mobile action
+  populateExpenseModal(null);
+  // On mobile, show the mobile-optimised sheet
+  if (isMobile()) {
+    showMobileExpenseSheet();
+  } else {
+    openModal('expense');
+  }
+}
+
+function showMobileExpenseSheet() {
+  // Build a streamlined mobile expense entry experience
+  const overlay = document.getElementById('modal-expense');
+  if (!overlay) { openModal('expense'); return; }
+  // Inject mobile pill selectors for category and subcategory
+  injectMobilePills();
+  overlay.classList.add('open');
+  // Auto-focus amount field
+  setTimeout(() => {
+    const amt = document.getElementById('exp-amount');
+    if (amt) { amt.focus(); amt.select(); }
+  }, 300);
+}
+
+function injectMobilePills() {
+  if (!isMobile()) return;
+  // Replace category select with pills if not already done
+  const catSel = document.getElementById('exp-cat');
+  if (!catSel || catSel.style.display === 'none') return;
+  // Build pill container for cats
+  const cats = ['Fixed','Lifestyle','Health','Financial','Misc'];
+  const catColors = {Fixed:'var(--blue)',Lifestyle:'var(--gold)',Health:'var(--red)',Financial:'var(--green)',Misc:'var(--purple)'};
+  const curCat = catSel.value || 'Lifestyle';
+  // Insert pill row before the category group
+  let pillWrap = document.getElementById('mobile-cat-pills');
+  if (!pillWrap) {
+    pillWrap = document.createElement('div');
+    pillWrap.id = 'mobile-cat-pills';
+    pillWrap.className = 'pill-row';
+    catSel.parentElement.parentElement.insertBefore(pillWrap, catSel.parentElement.parentElement.firstChild);
+  }
+  pillWrap.innerHTML = cats.map(c =>
+    '<button type="button" class="cat-pill' + (c === curCat ? ' selected' : '') + '" onclick="mobileCatPick(&apos;' + c + '&apos;)" style="' + (c === curCat ? 'border-color:' + catColors[c] + ';background:' + catColors[c] + '18;color:' + catColors[c] + ';' : '') + '">' + c + '</button>'
+  ).join('');
+  // Hide the selects on mobile
+  catSel.parentElement.style.display = 'none';
+  updateMobileSubcatPills(curCat);
+}
+
+function mobileCatPick(cat) {
+  const catSel = document.getElementById('exp-cat');
+  if (catSel) catSel.value = cat;
+  updateSubCat();
+  updateLoanLink();
+  const catColors = {Fixed:'var(--blue)',Lifestyle:'var(--gold)',Health:'var(--red)',Financial:'var(--green)',Misc:'var(--purple)'};
+  document.querySelectorAll('.cat-pill').forEach(p => {
+    const isSelected = p.textContent === cat;
+    p.classList.toggle('selected', isSelected);
+    p.style = isSelected ? 'border-color:' + catColors[cat] + ';background:' + catColors[cat] + '18;color:' + catColors[cat] + ';' : '';
+  });
+  updateMobileSubcatPills(cat);
+}
+
+function updateMobileSubcatPills(cat) {
+  const subcatSel = document.getElementById('exp-subcat');
+  if (!subcatSel) return;
+  const subs = subCats[cat] || [];
+  const curSub = subcatSel.value || subs[0] || '';
+  let pillWrap = document.getElementById('mobile-subcat-pills');
+  if (!pillWrap) {
+    pillWrap = document.createElement('div');
+    pillWrap.id = 'mobile-subcat-pills';
+    pillWrap.className = 'pill-row';
+    subcatSel.parentElement.parentElement.insertBefore(pillWrap, subcatSel.parentElement.parentElement.firstChild);
+    subcatSel.parentElement.style.display = 'none';
+  }
+  pillWrap.innerHTML = subs.map(function(s) {
+    return '<button type="button" class="subcat-pill' + (s === curSub ? ' selected' : '') + '" onclick="mobileSubcatPick(&apos;' + s + '&apos;)">' + s + '</button>';
+  }).join('');
+  if (subs.length && (!curSub || !subs.includes(curSub))) {
+    mobileSubcatPick(subs[0]);
+  }
+}
+
+
+function mobileSubcatPick(sub) {
+  const subcatSel = document.getElementById('exp-subcat');
+  if (subcatSel) subcatSel.value = sub;
+  updateLoanLink();
+  document.querySelectorAll('.subcat-pill').forEach(p => {
+    p.classList.toggle('selected', p.textContent === sub);
+  });
+}
+
+// ═══ MOBILE CARD RENDERERS ═══
+// These render card-based views alongside hidden tables on mobile
+
+function renderMobileCards(containerId, items) {
+  // Find or create mobile card list after each table-wrap
+  const tableWrap = document.querySelector('#page-' + containerId + ' .table-wrap');
+  if (!tableWrap) return;
+  let cardList = tableWrap.nextElementSibling;
+  if (!cardList || !cardList.classList.contains('mobile-card-list')) {
+    cardList = document.createElement('div');
+    cardList.className = 'mobile-card-list';
+    tableWrap.parentNode.insertBefore(cardList, tableWrap.nextSibling);
+  }
+  cardList.innerHTML = items;
+}
+
+function renderMobileAccounts() {
+  if (!isMobile()) return;
+  const enriched = allComputedBalances();
+  const catColors = {Bank:'var(--blue)',Wallet:'var(--gold)',Cash:'var(--green)','Credit Card':'var(--red)'};
+  const items = enriched.map(a => {
+    const aid = a.id;
+    const isCC = a.type === 'Credit Card';
+    const amount = isCC ? ccOutstanding(aid) : a.balance;
+    const amountColor = isCC ? 'var(--red)' : amount < 0 ? 'var(--red)' : 'var(--text)';
+    const sub = isCC
+      ? 'Limit: ' + fmt(a.ccLimit||0) + ' · Due in ' + Math.ceil((ccNextDueDate(a)-new Date())/(24*3600*1000)) + 'd'
+      : a.type;
+    return '<div class="mobile-card-item">'
+      + '<div class="mobile-card-dot" style="background:' + (catColors[a.type]||'var(--text3)') + ';"></div>'
+      + '<div class="mobile-card-body"><div class="mobile-card-title">' + a.name + '</div><div class="mobile-card-sub">' + sub + '</div></div>'
+      + '<div style="text-align:right;">'
+      + '<div class="mobile-card-amount" style="color:' + amountColor + ';">' + fmt(Math.abs(amount)) + '</div>'
+      + (isCC ? '<div style="font-size:10px;color:var(--red);">outstanding</div>' : '')
+      + '</div></div>';
+  }).join('') || '<div style="padding:20px;text-align:center;color:var(--text3);">No accounts yet</div>';
+  renderMobileCards('accounts', items);
+}
+
+function renderMobileExpenses() {
+  if (!isMobile()) return;
+  const mf = document.getElementById('exp-month-filter').value;
+  const cf = document.getElementById('exp-cat-filter').value;
+  let data = expenses.filter(x => !x.isRecurring);
+  if (mf) data = data.filter(x => monthKey(x.date) === mf);
+  if (cf) data = data.filter(x => x.category === cf);
+  data = [...data].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 50);
+  const catDots = {Fixed:'var(--blue)',Lifestyle:'var(--gold)',Health:'var(--red)',Financial:'var(--green)',Misc:'var(--purple)'};
+  const items = data.map(x => {
+    const xid = x.id;
+    return '<div class="mobile-card-item" style="position:relative;">'
+      + '<div class="mobile-card-dot" style="background:' + (catDots[x.category]||'var(--text3)') + ';"></div>'
+      + '<div class="mobile-card-body">'
+      + '<div class="mobile-card-title">' + x.subcategory + (x.desc ? ' · ' + x.desc : '') + '</div>'
+      + '<div class="mobile-card-sub">' + fmtDate(x.date) + ' · ' + x.mode + '</div>'
+      + '</div>'
+      + '<div style="text-align:right;">'
+      + '<div class="mobile-card-amount negative">' + fmt(x.amount) + '</div>'
+      + '</div></div>';
+  }).join('') || '<div style="padding:20px;text-align:center;color:var(--text3);">No expenses found</div>';
+  renderMobileCards('expenses', items);
+}
+
+function renderMobileIncome() {
+  if (!isMobile()) return;
+  const f = document.getElementById('income-month-filter').value;
+  let data = incomes.filter(x => !x.isRecurring);
+  if (f) data = data.filter(x => monthKey(x.date) === f);
+  data = [...data].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 50);
+  const srcColors = {Salary:'var(--blue)',Bonus:'var(--gold)',Freelance:'var(--green)',Dividend:'var(--accent)',Other:'var(--text3)'};
+  const items = data.map(x => {
+    return '<div class="mobile-card-item">'
+      + '<div class="mobile-card-dot" style="background:' + (srcColors[x.source]||'var(--text3)') + ';"></div>'
+      + '<div class="mobile-card-body">'
+      + '<div class="mobile-card-title">' + x.source + (x.notes ? ' · ' + x.notes : '') + '</div>'
+      + '<div class="mobile-card-sub">' + fmtDate(x.date) + '</div>'
+      + '</div>'
+      + '<div class="mobile-card-amount positive">' + fmt(x.amount) + '</div>'
+      + '</div>';
+  }).join('') || '<div style="padding:20px;text-align:center;color:var(--text3);">No income yet</div>';
+  renderMobileCards('income', items);
+}
+
+function renderMobileInvestments() {
+  if (!isMobile()) return;
+  const enriched = investments.map(x => ({...x, lv: getFDCurrentValue(x)}));
+  const typeColors = {'Mutual Fund':'var(--blue)','Stock':'var(--green)','FD':'var(--gold)','PF':'var(--green)','PPF':'var(--green)','Gold':'var(--accent)','Crypto':'var(--red)','Other':'var(--text3)'};
+  const items = enriched.map(x => {
+    const r = x.invested ? ((x.lv - x.invested)/x.invested*100) : 0;
+    return '<div class="mobile-card-item">'
+      + '<div class="mobile-card-dot" style="background:' + (typeColors[x.type]||'var(--text3)') + ';"></div>'
+      + '<div class="mobile-card-body">'
+      + '<div class="mobile-card-title">' + x.name + '</div>'
+      + '<div class="mobile-card-sub">' + x.type + ' · Invested: ' + fmt(x.invested) + '</div>'
+      + '</div>'
+      + '<div style="text-align:right;">'
+      + '<div class="mobile-card-amount">' + fmt(x.lv) + '</div>'
+      + '<div style="font-size:11px;font-weight:600;color:' + (r>=0?'var(--green)':'var(--red)') + ';">' + (r>=0?'+':'') + pct(r) + '</div>'
+      + '</div></div>';
+  }).join('') || '<div style="padding:20px;text-align:center;color:var(--text3);">No investments yet</div>';
+  renderMobileCards('investments', items);
+}
+
+// ═══ MOBILE PILL CLEANUP ON MODAL CLOSE ═══
+function cleanupMobilePills() {
+  const cp = document.getElementById('mobile-cat-pills');
+  const sp = document.getElementById('mobile-subcat-pills');
+  if (cp) cp.remove();
+  if (sp) sp.remove();
+  const catSel = document.getElementById('exp-cat');
+  const subcatSel = document.getElementById('exp-subcat');
+  if (catSel && catSel.parentElement) catSel.parentElement.style.display = '';
+  if (subcatSel && subcatSel.parentElement) subcatSel.parentElement.style.display = '';
+}
+
+// ═══ RENDER: MORE PAGE ═══
+function renderMore() {
+  updateMoreSyncUI();
+  updateMoreDarkLabel();
+  // Sync save label
+  const ls = DB.get('lastSaved','');
+  if (ls) {
+    const ml = document.getElementById('more-save-label');
+    const md = document.getElementById('more-save-dot');
+    const dt = new Date(ls);
+    const t = dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    const isToday = dt.toDateString() === new Date().toDateString();
+    if (ml) ml.textContent = 'Saved ' + (isToday ? 'at ' + t : dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'}));
+    if (md) md.style.background = 'var(--green)';
+  }
+}
+
+function updateMoreSyncUI() {
+  const hasToken = !!googleToken;
+  const out = document.getElementById('more-google-signed-out');
+  const inn = document.getElementById('more-google-signed-in');
+  if (out) out.style.display = hasToken ? 'none' : 'block';
+  if (inn) inn.style.display = hasToken ? 'block' : 'none';
+  if (hasToken) {
+    const emailEl = document.getElementById('more-user-email');
+    const sideEmail = document.getElementById('sync-user-email');
+    if (emailEl && sideEmail) emailEl.textContent = sideEmail.textContent;
+    const dot = document.getElementById('more-sync-dot');
+    const lbl = document.getElementById('more-sync-label');
+    const sideDot = document.getElementById('sync-dot');
+    const sideLbl = document.getElementById('sync-label');
+    if (dot && sideDot) dot.className = sideDot.className;
+    if (lbl && sideLbl) lbl.textContent = sideLbl.textContent;
+  }
+}
+
+function updateMoreDarkLabel() {
+  const icon = document.getElementById('more-dark-icon');
+  const lbl = document.getElementById('more-dark-label');
+  if (icon) icon.textContent = settings.dark ? '☀' : '☾';
+  if (lbl) lbl.textContent = settings.dark ? ' Light Mode' : ' Dark Mode';
+}
+
+// Patch onSignedIn to also update More page
+const _origOnSignedIn = onSignedIn;
+function onSignedIn() {
+  _origOnSignedIn();
+  updateMoreSyncUI();
+}
+
+// Patch signOutGoogle to also update More page
+const _origSignOutGoogle = signOutGoogle;
+function signOutGoogle() {
+  _origSignOutGoogle();
+  updateMoreSyncUI();
+}
+
+// ═══ MOBILE INIT ═══
+function initMobile() {
+  if (!isMobile()) return;
+  // Hide desktop FAB
+  const fab = document.getElementById('fab-btn');
+  if (fab) fab.style.display = 'none';
+  const fabMenu = document.getElementById('fab-menu');
+  if (fabMenu) fabMenu.style.display = 'none';
+  // Set active mobile nav
+  mobileNav('dashboard');
+}
+
 // ═══ INIT ═══
 function init() {
   applyDark();
@@ -2920,6 +3452,7 @@ function init() {
   // Try to restore Google session
   if (typeof google !== 'undefined') tryRestoreGoogleSession();
   else window.addEventListener('load', () => { if (typeof google !== 'undefined') tryRestoreGoogleSession(); });
+  initMobile();
 }
 
 init();
