@@ -2103,7 +2103,6 @@ function renderDashboard() {
   }
 
   // Monthly
-  const thisMonth = now.toISOString().slice(0, 7);
   const period = getCurrentPeriod();
   const mInc = incomes.filter(x => !x.isRecurring && inCurrentPeriod(x.date)).reduce((s,x) => s+x.amount, 0);
   const mExp = expenses.filter(x => !x.isRecurring && inCurrentPeriod(x.date)).reduce((s,x) => s+x.amount, 0);
@@ -2160,40 +2159,40 @@ function renderAlerts(period, mInc, mExp) {
 function renderInsights(period, mInc, mExp, mRate) {
   const el = document.getElementById('dash-insights');
   if (!el) return;
-  const lastMonth = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString().slice(0, 7);
+  // Period comparison uses salary cycle periods
   const insights = [];
 
   // Savings rate (3-month rolling)
   const rollingRate = rolling3MonthSavingsRate();
   const target = healthTargets.savings || 70;
   if (mInc > 0) {
-    if (mRate >= target) insights.push({ emoji: '🎉', title: 'On target!', desc: 'Savings rate this month: ' + pct(mRate) + ' — above your ' + target + '% goal.' });
-    else if (mRate > 0) insights.push({ emoji: '📊', title: 'Savings rate', desc: pct(mRate) + ' this month vs your ' + pct(target) + ' target. 3-month avg: ' + pct(rollingRate) + '.' });
+    if (mRate >= target) insights.push({ emoji: '🎉', title: 'On target!', desc: 'Savings rate this cycle: ' + pct(mRate) + ' — above your ' + target + '% goal.' });
+    else if (mRate > 0) insights.push({ emoji: '📊', title: 'Savings rate', desc: pct(mRate) + ' this cycle vs your ' + pct(target) + ' target. 3-cycle avg: ' + pct(rollingRate) + '.' });
   }
 
-  // Top category increase
+  // Top category increase (current vs previous salary cycle)
   const cats = ['Fixed','Lifestyle','Health','Financial','Misc'];
   let biggestInc = null, biggestDiff = 0;
   cats.forEach(cat => {
-    const tm = expenses.filter(x => !x.isRecurring && monthKey(x.date) === thisMonth && x.category === cat).reduce((s,x) => s+x.amount, 0);
-    const lm = expenses.filter(x => !x.isRecurring && monthKey(x.date) === lastMonth && x.category === cat).reduce((s,x) => s+x.amount, 0);
+    const tm = expenses.filter(x => !x.isRecurring && inCurrentPeriod(x.date) && x.category === cat).reduce((s,x) => s+x.amount, 0);
+    const lm = expenses.filter(x => !x.isRecurring && inPreviousPeriod(x.date) && x.category === cat).reduce((s,x) => s+x.amount, 0);
     if (tm > 0 && lm > 0) { const diff = tm - lm, p = diff/lm*100; if (Math.abs(p) >= 15 && Math.abs(diff) > biggestDiff) { biggestDiff = Math.abs(diff); biggestInc = { cat, tm, lm, diff, p }; } }
   });
   if (biggestInc) {
     const up = biggestInc.diff > 0;
-    insights.push({ emoji: up ? '📈' : '📉', title: biggestInc.cat + ' spending ' + (up?'up':'down'), desc: fmt(biggestInc.tm) + ' this month vs ' + fmt(biggestInc.lm) + ' last month (' + (up?'+':'') + pct(biggestInc.p) + ').' });
+    insights.push({ emoji: up ? '📈' : '📉', title: biggestInc.cat + ' spending ' + (up?'up':'down'), desc: fmt(biggestInc.tm) + ' this cycle vs ' + fmt(biggestInc.lm) + ' last cycle (' + (up?'+':'') + pct(biggestInc.p) + ').' });
   }
 
   // Idle cash
   const cashTotal = accounts.filter(a => a.type === 'Cash' || a.type === 'Wallet').reduce((s,a) => s+computedBalance(a.id), 0);
   if (cashTotal > 50000) insights.push({ emoji: '💡', title: 'Idle cash', desc: fmt(cashTotal) + ' in Cash/Wallet. Consider moving to an FD or savings account.' });
 
-  // Top subcategory
+  // Top subcategory this cycle
   if (mExp > 0) {
     const sm = {};
-    expenses.filter(x => !x.isRecurring && monthKey(x.date) === thisMonth).forEach(x => { sm[x.subcategory] = (sm[x.subcategory]||0) + x.amount; });
+    expenses.filter(x => !x.isRecurring && inCurrentPeriod(x.date)).forEach(x => { sm[x.subcategory] = (sm[x.subcategory]||0) + x.amount; });
     const top = Object.entries(sm).sort((a,b) => b[1]-a[1])[0];
-    if (top && top[1]/mExp > 0.2) insights.push({ emoji: '🔍', title: top[0], desc: fmt(top[1]) + ' (' + pct(top[1]/mExp*100) + ' of total expenses this month).' });
+    if (top && top[1]/mExp > 0.2) insights.push({ emoji: '🔍', title: top[0], desc: fmt(top[1]) + ' (' + pct(top[1]/mExp*100) + ' of total expenses this cycle).' });
   }
 
   if (!insights.length) insights.push({ emoji: '✨', title: 'Add transactions', desc: 'Log some income and expenses to see personalised insights here.' });
