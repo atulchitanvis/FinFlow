@@ -2932,17 +2932,24 @@ function signOutGoogle() {
 }
 
 function onSignedIn() {
-  document.getElementById('google-signed-out').style.display = 'none';
-  document.getElementById('google-signed-in').style.display = 'block';
-  // Get user email from token info
+  // Update sidebar (desktop)
+  const sOut = document.getElementById('google-signed-out');
+  const sIn  = document.getElementById('google-signed-in');
+  if (sOut) sOut.style.display = 'none';
+  if (sIn)  sIn.style.display  = 'block';
+  // Update More page (mobile) immediately — don't wait for email fetch
+  updateMoreSyncUI();
+  setSyncStatus('syncing', 'Connecting...');
+  // Fetch email async — update both panels when it arrives
   fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + googleToken)
     .then(r => r.json())
     .then(info => {
-      const emailEl = document.getElementById('sync-user-email');
-      if (emailEl && info.email) emailEl.textContent = info.email;
-      updateMoreSyncUI();
+      if (!info.email) return;
+      const sideEmail = document.getElementById('sync-user-email');
+      if (sideEmail) sideEmail.textContent = info.email;
+      const moreEmail = document.getElementById('more-user-email');
+      if (moreEmail) moreEmail.textContent = info.email;
     }).catch(() => {});
-  setSyncStatus('syncing', 'Connecting...');
   loadFromDrive();
 }
 
@@ -3426,15 +3433,19 @@ function updateMoreSyncUI() {
   if (out) out.style.display = hasToken ? 'none' : 'block';
   if (inn) inn.style.display = hasToken ? 'block' : 'none';
   if (hasToken) {
-    const emailEl = document.getElementById('more-user-email');
-    const sideEmail = document.getElementById('sync-user-email');
-    if (emailEl && sideEmail) emailEl.textContent = sideEmail.textContent;
-    const dot = document.getElementById('more-sync-dot');
-    const lbl = document.getElementById('more-sync-label');
+    // Sync dot + label
     const sideDot = document.getElementById('sync-dot');
     const sideLbl = document.getElementById('sync-label');
-    if (dot && sideDot) dot.className = sideDot.className;
-    if (lbl && sideLbl) lbl.textContent = sideLbl.textContent;
+    const moreDot = document.getElementById('more-sync-dot');
+    const moreLbl = document.getElementById('more-sync-label');
+    if (moreDot) moreDot.className = sideDot ? sideDot.className : 'sync-dot synced';
+    if (moreLbl) moreLbl.textContent = sideLbl ? sideLbl.textContent : 'Drive connected';
+    // Email
+    const sideEmail = document.getElementById('sync-user-email');
+    const moreEmail = document.getElementById('more-user-email');
+    if (moreEmail && sideEmail && sideEmail.textContent) {
+      moreEmail.textContent = sideEmail.textContent;
+    }
   }
 }
 
