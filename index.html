@@ -6,6 +6,106 @@
 <title>Finflow — Personal Finance</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// ── Google One Tap + session restore ──
+// We use two strategies:
+// 1. google.accounts.id (One Tap) — silently signs in returning users on page load
+// 2. Stored token validation — if One Tap not available, validate stored token
+// One Tap fires a callback with a credential (JWT) that we exchange for an access token
+
+let googleToken = null;
+let driveFileId = '';
+
+function initGoogleAuth() {
+  if (!window.google?.accounts) return;
+
+  // One Tap — fires automatically for returning Google users, no click needed
+  google.accounts.id.initialize({
+    client_id: '1071003192631-94q996p6g1le1d7s59iqqp4bkmrka8o3.apps.googleusercontent.com',
+    callback: handleOneTapCredential,
+    auto_select: true,           // auto-select if only one account
+    cancel_on_tap_outside: false // don't dismiss
+  });
+
+  // Prompt One Tap (shows overlay if not auto-selected)
+  google.accounts.id.prompt((notification) => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      // One Tap not shown — fall back to stored token validation
+      tryValidateStoredToken();
+    }
+  });
+}
+
+async function handleOneTapCredential(credentialResponse) {
+  // One Tap returns a JWT — we need to exchange it for a Drive access token
+  // We do this by requesting an access token via initTokenClient
+  // The credential proves the user is authenticated so no popup is shown
+  if (!credentialResponse.credential) { tryValidateStoredToken(); return; }
+  requestDriveToken();
+}
+
+function requestDriveToken(interactive) {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: '1071003192631-94q996p6g1le1d7s59iqqp4bkmrka8o3.apps.googleusercontent.com',
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    prompt: interactive ? 'consent' : '',
+    callback: (response) => {
+      if (response.error) {
+        if (!interactive) tryValidateStoredToken();
+        else showToast('Sign-in failed: ' + response.error, true);
+        return;
+      }
+      googleToken = response.access_token;
+      DB.set('googleToken', googleToken);
+      onSignedIn();
+    }
+  });
+  client.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+}
+
+async function tryValidateStoredToken() {
+  const stored = DB.get('googleToken', '');
+  if (!stored) { setSyncStatus('offline', 'Not signed in'); return; }
+  try {
+    const resp = await fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + stored);
+    const info = await resp.json();
+    if (info.error || !info.email) {
+      DB.set('googleToken', '');
+      setSyncStatus('offline', 'Session expired — sign in to sync');
+      return;
+    }
+    googleToken = stored;
+    ['sync-user-email','more-user-email'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = info.email;
+    });
+    driveFileId = DB.get('driveFileId', '');
+    onSignedIn();
+  } catch(e) {
+    DB.set('googleToken', '');
+    setSyncStatus('offline', 'Not signed in');
+  }
+}
+
+// Called by the sign-in buttons
+function signInGoogle() { requestDriveToken(true); }
+
+// Wait for GSI to load then init
+function tryRestoreGoogleSession() {
+  if (window.google?.accounts) {
+    initGoogleAuth();
+  } else {
+    // GSI hasn't loaded yet — wait for it
+    const check = setInterval(() => {
+      if (window.google?.accounts) {
+        clearInterval(check);
+        initGoogleAuth();
+      }
+    }, 200);
+    // Give up after 5 seconds
+    setTimeout(() => clearInterval(check), 5000);
+  }
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -2884,12 +2984,13 @@ function renderGoals(){
 }
 
 // ═══ GOOGLE DRIVE SYNC ═══
+// OAuth constants (client_id also defined in head script)
 const GAPI_CLIENT_ID = '1071003192631-94q996p6g1le1d7s59iqqp4bkmrka8o3.apps.googleusercontent.com';
 const GAPI_SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const DRIVE_FILE_NAME = 'finflow-data.json';
 
-let googleToken = null;
-let driveFileId = DB.get('driveFileId', '');
+// googleToken and driveFileId are declared in the head auth script
+// Re-initialize from localStorage on load
 let syncPending = false;
 let syncTimeout = null;
 
@@ -2911,34 +3012,7 @@ function setSyncStatus(state,msg){
   ['sync-label','more-sync-label'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=msg;});
 }
 
-// ── Google Sign In ──
-function signInGoogle(){
-  const client=google.accounts.oauth2.initTokenClient({
-    client_id:GAPI_CLIENT_ID,scope:GAPI_SCOPES,
-    callback:(response)=>{
-      if(response.error){showToast('Sign-in failed: '+response.error,true);return;}
-      googleToken=response.access_token;DB.set('googleToken',googleToken);onSignedIn();
-    }
-  });
-  client.requestAccessToken();
-}
-
-// ── Silent token refresh (no popup if user still has active Google session) ──
-function trySilentRefresh(){
-  return new Promise((resolve)=>{
-    if(!window.google?.accounts?.oauth2){resolve(false);return;}
-    try{
-      const client=google.accounts.oauth2.initTokenClient({
-        client_id:GAPI_CLIENT_ID,scope:GAPI_SCOPES,prompt:'',
-        callback:(response)=>{
-          if(response.error||!response.access_token){resolve(false);return;}
-          googleToken=response.access_token;DB.set('googleToken',googleToken);resolve(true);
-        }
-      });
-      client.requestAccessToken();
-    }catch(e){resolve(false);}
-  });
-}
+// signInGoogle, trySilentRefresh, tryRestoreGoogleSession defined in head script
 
 function signOutGoogle(){
   if(googleToken)google.accounts.oauth2.revoke(googleToken);
@@ -3068,11 +3142,7 @@ async function syncToDrive(showFeedback){
     setLastSynced();setSyncStatus('synced','Drive synced ✓');
     if(showFeedback)showToast('Saved to Google Drive ✓');
   }catch(err){
-    // Try silent token refresh then retry once
-    const refreshed=await trySilentRefresh();
-    if(refreshed){
-      try{await updateDriveFile(driveFileId,buildSyncPayload());setLastSynced();setSyncStatus('synced','Drive synced ✓');if(showFeedback)showToast('Saved to Google Drive ✓');return;}catch(e2){}
-    }
+    // Token expired — user will need to sign in again
     console.error('Drive save error:',err);
     setSyncStatus('error','Sync failed — data saved locally');
     if(showFeedback)showToast('Drive sync failed — data saved locally',true);
@@ -3082,7 +3152,7 @@ async function syncToDrive(showFeedback){
 // ── Auto-sync on tab hide/show ──
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden'&&googleToken&&driveFileId)syncToDrive(false);
-  if(document.visibilityState==='visible'&&!googleToken)trySilentRefresh().then(ok=>{if(ok){driveFileId=DB.get('driveFileId','');onSignedIn();}});
+  if(document.visibilityState==='visible'&&!googleToken)tryRestoreGoogleSession();
 });
 
 // ── Debounced auto-sync on every save ──
@@ -3092,25 +3162,7 @@ function scheduleDriveSync(){
   syncTimeout=setTimeout(()=>syncToDrive(false),3000);
 }
 
-// ── Session restore on open: silent refresh first, stored token fallback ──
-async function tryRestoreGoogleSession(){
-  setSyncStatus('syncing','Reconnecting...');
-  // Try silent refresh (works if browser still has Google session)
-  const silentOk=await trySilentRefresh();
-  if(silentOk){driveFileId=DB.get('driveFileId','');onSignedIn();return;}
-  // Fall back to validating stored token
-  const stored=DB.get('googleToken','');
-  if(!stored){setSyncStatus('offline','Not signed in');return;}
-  try{
-    const resp=await fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token='+stored);
-    const info=await resp.json();
-    if(info.error||!info.email){DB.set('googleToken','');setSyncStatus('offline','Session expired — sign in to sync');showToast('Drive session expired — sign in again to sync',true);return;}
-    googleToken=stored;
-    ['sync-user-email','more-user-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=info.email;});
-    driveFileId=DB.get('driveFileId','');
-    onSignedIn();
-  }catch(e){DB.set('googleToken','');setSyncStatus('offline','Not signed in');}
-}
+// tryRestoreGoogleSession defined in head script
 
 
 // ═══ MOBILE ═══
