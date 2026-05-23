@@ -1310,6 +1310,7 @@ function save(){
   DB.set('taxSettings',taxSettings);DB.set('healthTargets',healthTargets);DB.set('goals',goals);DB.set('passiveTarget',passiveTarget);
   DB.set('lastAccount',lastAccount);
   const now=new Date();DB.set('lastSaved',now.toISOString());updateSaveLabel(now);
+  setLastLocalChange();
   scheduleDriveSync();
 }
 function updateSaveLabel(d){
@@ -2892,230 +2893,223 @@ let driveFileId = DB.get('driveFileId', '');
 let syncPending = false;
 let syncTimeout = null;
 
+// Track local changes vs syncs separately
+function getLastLocalChange(){ return DB.get('lastLocalChange',''); }
+function setLastLocalChange(){ DB.set('lastLocalChange',new Date().toISOString()); }
+function getLastSynced(){ return DB.get('lastSynced',''); }
+function setLastSynced(){ DB.set('lastSynced',new Date().toISOString()); }
+function hasUncommittedLocalChanges(){
+  const lc=getLastLocalChange(),ls=getLastSynced();
+  if(!lc)return false;
+  if(!ls)return true;
+  return new Date(lc)>new Date(ls);
+}
+
 // ── Sync status UI ──
-function setSyncStatus(state, msg) {
-  const dot = document.getElementById('sync-dot');
-  const lbl = document.getElementById('sync-label');
-  if (!dot || !lbl) return;
-  dot.className = 'sync-dot ' + state;
-  lbl.textContent = msg;
+function setSyncStatus(state,msg){
+  ['sync-dot','more-sync-dot'].forEach(id=>{const el=document.getElementById(id);if(el)el.className='sync-dot '+state;});
+  ['sync-label','more-sync-label'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=msg;});
 }
 
 // ── Google Sign In ──
-function signInGoogle() {
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: GAPI_CLIENT_ID,
-    scope: GAPI_SCOPES,
-    callback: (response) => {
-      if (response.error) {
-        showToast('Google sign-in failed: ' + response.error, true);
-        return;
-      }
-      googleToken = response.access_token;
-      DB.set('googleToken', googleToken);
-      onSignedIn();
+function signInGoogle(){
+  const client=google.accounts.oauth2.initTokenClient({
+    client_id:GAPI_CLIENT_ID,scope:GAPI_SCOPES,
+    callback:(response)=>{
+      if(response.error){showToast('Sign-in failed: '+response.error,true);return;}
+      googleToken=response.access_token;DB.set('googleToken',googleToken);onSignedIn();
     }
   });
   client.requestAccessToken();
 }
 
-function signOutGoogle() {
-  if (googleToken) google.accounts.oauth2.revoke(googleToken);
-  googleToken = null;
-  DB.set('googleToken', '');
-  DB.set('driveFileId', '');
-  driveFileId = '';
-  document.getElementById('google-signed-out').style.display = 'block';
-  document.getElementById('google-signed-in').style.display = 'none';
+// ── Silent token refresh (no popup if user still has active Google session) ──
+function trySilentRefresh(){
+  return new Promise((resolve)=>{
+    if(!window.google?.accounts?.oauth2){resolve(false);return;}
+    try{
+      const client=google.accounts.oauth2.initTokenClient({
+        client_id:GAPI_CLIENT_ID,scope:GAPI_SCOPES,prompt:'',
+        callback:(response)=>{
+          if(response.error||!response.access_token){resolve(false);return;}
+          googleToken=response.access_token;DB.set('googleToken',googleToken);resolve(true);
+        }
+      });
+      client.requestAccessToken();
+    }catch(e){resolve(false);}
+  });
+}
+
+function signOutGoogle(){
+  if(googleToken)google.accounts.oauth2.revoke(googleToken);
+  googleToken=null;DB.set('googleToken','');DB.set('driveFileId','');driveFileId='';
+  const so=document.getElementById('google-signed-out'),si=document.getElementById('google-signed-in');
+  if(so)so.style.display='block';if(si)si.style.display='none';
   showToast('Signed out from Google Drive');
   updateMoreSyncUI();
 }
 
-function onSignedIn() {
-  // Update sidebar (desktop)
-  const sOut = document.getElementById('google-signed-out');
-  const sIn  = document.getElementById('google-signed-in');
-  if (sOut) sOut.style.display = 'none';
-  if (sIn)  sIn.style.display  = 'block';
-  // Update More page (mobile) immediately — don't wait for email fetch
+function onSignedIn(){
+  const sOut=document.getElementById('google-signed-out'),sIn=document.getElementById('google-signed-in');
+  if(sOut)sOut.style.display='none';if(sIn)sIn.style.display='block';
   updateMoreSyncUI();
-  setSyncStatus('syncing', 'Connecting...');
-  // Fetch email async — update both panels when it arrives
-  fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + googleToken)
-    .then(r => r.json())
-    .then(info => {
-      if (!info.email) return;
-      const sideEmail = document.getElementById('sync-user-email');
-      if (sideEmail) sideEmail.textContent = info.email;
-      const moreEmail = document.getElementById('more-user-email');
-      if (moreEmail) moreEmail.textContent = info.email;
-    }).catch(() => {});
+  setSyncStatus('syncing','Connecting...');
+  fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token='+googleToken)
+    .then(r=>r.json()).then(info=>{
+      if(!info.email)return;
+      ['sync-user-email','more-user-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=info.email;});
+    }).catch(()=>{});
   loadFromDrive();
 }
 
 // ── Drive API helpers ──
-function driveHeaders() {
-  return { 'Authorization': 'Bearer ' + googleToken, 'Content-Type': 'application/json' };
+function driveHeaders(){return{'Authorization':'Bearer '+googleToken,'Content-Type':'application/json'};}
+
+async function findDriveFile(){
+  const resp=await fetch("https://www.googleapis.com/drive/v3/files?q=name='"+DRIVE_FILE_NAME+"'+and+trashed=false&spaces=drive&fields=files(id,name,modifiedTime)",{headers:{'Authorization':'Bearer '+googleToken}});
+  const data=await resp.json();
+  return(data.files&&data.files.length>0)?data.files[0].id:null;
 }
 
-async function findDriveFile() {
-  const resp = await fetch(
-    "https://www.googleapis.com/drive/v3/files?q=name='" + DRIVE_FILE_NAME + "'+and+trashed=false&spaces=drive&fields=files(id,name,modifiedTime)",
-    { headers: { 'Authorization': 'Bearer ' + googleToken } }
-  );
-  const data = await resp.json();
-  if (data.files && data.files.length > 0) return data.files[0].id;
-  return null;
+async function createDriveFile(payload){
+  const meta=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:driveHeaders(),body:JSON.stringify({name:DRIVE_FILE_NAME,mimeType:'application/json'})});
+  const md=await meta.json();
+  await fetch('https://www.googleapis.com/upload/drive/v3/files/'+md.id+'?uploadType=media',{method:'PATCH',headers:{'Authorization':'Bearer '+googleToken,'Content-Type':'application/json'},body:payload});
+  return md.id;
 }
 
-async function createDriveFile(content) {
-  // Step 1: create file metadata
-  const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
-    method: 'POST',
-    headers: driveHeaders(),
-    body: JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' })
-  });
-  const metaData = await meta.json();
-  const fileId = metaData.id;
-  // Step 2: upload content
-  await fetch('https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media', {
-    method: 'PATCH',
-    headers: { 'Authorization': 'Bearer ' + googleToken, 'Content-Type': 'application/json' },
-    body: content
-  });
-  return fileId;
+async function updateDriveFile(fileId,payload){
+  await fetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',{method:'PATCH',headers:{'Authorization':'Bearer '+googleToken,'Content-Type':'application/json'},body:payload});
 }
 
-async function updateDriveFile(fileId, content) {
-  await fetch('https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media', {
-    method: 'PATCH',
-    headers: { 'Authorization': 'Bearer ' + googleToken, 'Content-Type': 'application/json' },
-    body: content
-  });
-}
-
-async function readDriveFile(fileId) {
-  const resp = await fetch(
-    'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media',
-    { headers: { 'Authorization': 'Bearer ' + googleToken } }
-  );
+async function readDriveFile(fileId){
+  const resp=await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'?alt=media',{headers:{'Authorization':'Bearer '+googleToken}});
   return await resp.json();
 }
 
-// ── Load from Drive ──
-async function loadFromDrive() {
-  if (!googleToken) return;
-  setSyncStatus('syncing', 'Loading from Drive...');
-  try {
-    // Find or remember file
-    let fileId = driveFileId;
-    if (!fileId) {
-      fileId = await findDriveFile();
-      if (fileId) { driveFileId = fileId; DB.set('driveFileId', fileId); }
+// ── MERGE: union by ID — no data loss ──
+function mergeArrays(local,remote,key='id'){
+  if(!remote||!remote.length)return local;
+  if(!local||!local.length)return remote;
+  const merged=[...remote],remoteIds=new Set(remote.map(x=>x[key]));
+  local.forEach(x=>{if(!remoteIds.has(x[key]))merged.push(x);});
+  return merged;
+}
+
+// ── Load from Drive (safe — never destroys uncommitted local changes) ──
+async function loadFromDrive(){
+  if(!googleToken)return;
+  setSyncStatus('syncing','Syncing...');
+  try{
+    let fileId=driveFileId;
+    if(!fileId){fileId=await findDriveFile();if(fileId){driveFileId=fileId;DB.set('driveFileId',fileId);}}
+    if(!fileId){
+      setSyncStatus('syncing','Creating Drive file...');
+      const payload=buildSyncPayload();
+      fileId=await createDriveFile(payload);
+      driveFileId=fileId;DB.set('driveFileId',fileId);setLastSynced();
+      setSyncStatus('synced','Drive synced ✓');showToast('Finflow data file created in Google Drive ✓');return;
     }
-    if (!fileId) {
-      // No file yet — create one with current data
-      setSyncStatus('syncing', 'Creating Drive file...');
-      const content = buildSyncPayload();
-      fileId = await createDriveFile(content);
-      driveFileId = fileId;
-      DB.set('driveFileId', fileId);
-      setSyncStatus('synced', 'Drive synced ✓');
-      showToast('Finflow data file created in Google Drive ✓');
-      return;
+    const data=await readDriveFile(fileId);
+    if(!data||!data._v){await syncToDrive(false);return;}
+    const driveTime=data._synced?new Date(data._synced):new Date(0);
+    const lastSyncedTime=getLastSynced()?new Date(getLastSynced()):new Date(0);
+    const hasLocal=hasUncommittedLocalChanges();
+    if(hasLocal&&driveTime>lastSyncedTime){
+      // Both sides have changes — MERGE (no data loss)
+      accounts=mergeArrays(accounts,data.accounts);
+      incomes=mergeArrays(incomes,data.incomes);
+      expenses=mergeArrays(expenses,data.expenses);
+      investments=mergeArrays(investments,data.investments);
+      loans=mergeArrays(loans,data.loans);
+      goals=mergeArrays(goals,data.goals);
+      if(data.taxSettings)taxSettings=data.taxSettings;
+      if(data.healthTargets)healthTargets=data.healthTargets;
+      if(data.passiveTarget)passiveTarget=data.passiveTarget;
+      if(data.nwHistory)nwHistory=Object.assign({},data.nwHistory,nwHistory);
+      save();await syncToDrive(false);
+      updateMonthFilters();updateAccountSelects();navigate('dashboard');
+      showToast('Merged local + Drive data ✓ — nothing lost');
+    } else if(!hasLocal&&driveTime>lastSyncedTime){
+      // Drive is newer, no local changes — safe to load
+      accounts=data.accounts||accounts;incomes=data.incomes||incomes;
+      expenses=data.expenses||expenses;investments=data.investments||investments;
+      loans=data.loans||loans;goals=data.goals||goals;
+      if(data.taxSettings)taxSettings=data.taxSettings;
+      if(data.healthTargets)healthTargets=data.healthTargets;
+      if(data.nwHistory)nwHistory=data.nwHistory;
+      if(data.passiveTarget)passiveTarget=data.passiveTarget;
+      save();setLastSynced();
+      updateMonthFilters();updateAccountSelects();navigate('dashboard');
+      showToast('Data loaded from Google Drive ✓');
+    } else {
+      // Local is current — push to Drive
+      await syncToDrive(false);
     }
-    // File exists — read it
-    const data = await readDriveFile(fileId);
-    if (data && data._v) {
-      // Drive has data — check if it's newer than local
-      const driveTime = data._synced ? new Date(data._synced) : new Date(0);
-      const localTime = DB.get('lastSaved', '') ? new Date(DB.get('lastSaved', '')) : new Date(0);
-      if (driveTime > localTime) {
-        // Drive is newer — load it
-        accounts = data.accounts || accounts;
-        incomes = data.incomes || incomes;
-        expenses = data.expenses || expenses;
-        investments = data.investments || investments;
-        loans = data.loans || loans;
-        goals = data.goals || goals;
-        if (data.taxSettings) taxSettings = data.taxSettings;
-        if (data.healthTargets) healthTargets = data.healthTargets;
-        if (data.nwHistory) nwHistory = data.nwHistory;
-        if (data.passiveTarget) passiveTarget = data.passiveTarget;
-        save();
-        updateMonthFilters();
-        updateAccountSelects();
-        navigate('dashboard');
-        showToast('Data loaded from Google Drive ✓');
-      } else {
-        // Local is newer or same — push local to drive
-        await syncToDrive(false);
-      }
-    }
-    setSyncStatus('synced', 'Drive synced ✓');
-  } catch (err) {
-    console.error('Drive load error:', err);
-    setSyncStatus('error', 'Sync error');
-    showToast('Could not sync with Drive — using local data', true);
+    setSyncStatus('synced','Drive synced ✓');
+  }catch(err){
+    console.error('Drive sync error:',err);
+    setSyncStatus('error','Sync error — local data safe');
+    showToast('Drive sync failed — your local data is safe',true);
   }
 }
 
-// ── Save to Drive ──
-function buildSyncPayload() {
-  return JSON.stringify({
-    _v: 3, _synced: new Date().toISOString(),
-    accounts, incomes, expenses, investments, loans,
-    goals, passiveTarget, taxSettings, healthTargets, nwHistory
-  });
+// ── Build sync payload ──
+function buildSyncPayload(){
+  return JSON.stringify({_v:3,_synced:new Date().toISOString(),accounts,incomes,expenses,investments,loans,goals,passiveTarget,taxSettings,healthTargets,nwHistory});
 }
 
-async function syncToDrive(showFeedback) {
-  if (!googleToken || !driveFileId) return;
-  setSyncStatus('syncing', 'Saving to Drive...');
-  try {
-    await updateDriveFile(driveFileId, buildSyncPayload());
-    setSyncStatus('synced', 'Drive synced ✓');
-    if (showFeedback) showToast('Saved to Google Drive ✓');
-  } catch (err) {
-    console.error('Drive save error:', err);
-    setSyncStatus('error', 'Sync failed');
-    if (showFeedback) showToast('Drive sync failed — data saved locally', true);
+// ── Push to Drive ──
+async function syncToDrive(showFeedback){
+  if(!googleToken||!driveFileId)return;
+  setSyncStatus('syncing','Saving to Drive...');
+  try{
+    await updateDriveFile(driveFileId,buildSyncPayload());
+    setLastSynced();setSyncStatus('synced','Drive synced ✓');
+    if(showFeedback)showToast('Saved to Google Drive ✓');
+  }catch(err){
+    // Try silent token refresh then retry once
+    const refreshed=await trySilentRefresh();
+    if(refreshed){
+      try{await updateDriveFile(driveFileId,buildSyncPayload());setLastSynced();setSyncStatus('synced','Drive synced ✓');if(showFeedback)showToast('Saved to Google Drive ✓');return;}catch(e2){}
+    }
+    console.error('Drive save error:',err);
+    setSyncStatus('error','Sync failed — data saved locally');
+    if(showFeedback)showToast('Drive sync failed — data saved locally',true);
   }
 }
 
-// ── Auto-sync on visibility change ──
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden' && googleToken && driveFileId) {
-    syncToDrive(false);
-  }
+// ── Auto-sync on tab hide/show ──
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'&&googleToken&&driveFileId)syncToDrive(false);
+  if(document.visibilityState==='visible'&&!googleToken)trySilentRefresh().then(ok=>{if(ok){driveFileId=DB.get('driveFileId','');onSignedIn();}});
 });
 
-// ── Debounced auto-sync on save ──
-function scheduleDriveSync() {
-  if (!googleToken || !driveFileId) return;
+// ── Debounced auto-sync on every save ──
+function scheduleDriveSync(){
+  if(!googleToken||!driveFileId)return;
   clearTimeout(syncTimeout);
-  syncTimeout = setTimeout(() => syncToDrive(false), 3000);
+  syncTimeout=setTimeout(()=>syncToDrive(false),3000);
 }
 
-// ── Restore session from stored token ──
-async function tryRestoreGoogleSession() {
-  const stored = DB.get('googleToken', '');
-  if (!stored) return;
-  // Verify token is still valid
-  try {
-    const resp = await fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + stored);
-    const info = await resp.json();
-    if (info.error || !info.email) { DB.set('googleToken', ''); return; }
-    googleToken = stored;
-    const emailEl = document.getElementById('sync-user-email');
-    if (emailEl) emailEl.textContent = info.email;
-    document.getElementById('google-signed-out').style.display = 'none';
-    document.getElementById('google-signed-in').style.display = 'block';
-    driveFileId = DB.get('driveFileId', '');
+// ── Session restore on open: silent refresh first, stored token fallback ──
+async function tryRestoreGoogleSession(){
+  setSyncStatus('syncing','Reconnecting...');
+  // Try silent refresh (works if browser still has Google session)
+  const silentOk=await trySilentRefresh();
+  if(silentOk){driveFileId=DB.get('driveFileId','');onSignedIn();return;}
+  // Fall back to validating stored token
+  const stored=DB.get('googleToken','');
+  if(!stored){setSyncStatus('offline','Not signed in');return;}
+  try{
+    const resp=await fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token='+stored);
+    const info=await resp.json();
+    if(info.error||!info.email){DB.set('googleToken','');setSyncStatus('offline','Session expired — sign in to sync');showToast('Drive session expired — sign in again to sync',true);return;}
+    googleToken=stored;
+    ['sync-user-email','more-user-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=info.email;});
+    driveFileId=DB.get('driveFileId','');
     onSignedIn();
-  } catch (e) {
-    DB.set('googleToken', '');
-  }
+  }catch(e){DB.set('googleToken','');setSyncStatus('offline','Not signed in');}
 }
 
 
