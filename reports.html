@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Finflow — Reports</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-serif:'DM Serif Display',serif;
+  --bg:#f4f2ee;--bg2:#ece9e3;--surface:#fff;--surface2:#faf9f7;
+  --border:#e0dbd3;--text:#18150f;--text2:#6b6560;--text3:#a09890;
+  --accent:#c8622a;--accent2:#e07840;--accent-light:#fdf0e8;
+  --green:#1e7a45;--green-light:#e6f4ec;--red:#c12b2b;--red-light:#fdeaea;
+  --blue:#2448a0;--blue-light:#e6edf8;--gold:#a87800;--gold-light:#fdf6e3;
+  --purple:#6b3fa0;--purple-light:#f0eafa;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.05),0 2px 8px rgba(0,0,0,0.04);
+  --shadow:0 1px 3px rgba(0,0,0,0.07),0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.13);
+  --radius:18px;--radius-sm:11px;--radius-xs:7px;
+  --tr:0.18s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0f0d09;--bg2:#1a1814;--surface:#1e1c17;--surface2:#242118;
+  --border:#2e2b24;--text:#ede9e0;--text2:#9e9688;--text3:#5a5650;
+  --accent:#e07840;--accent2:#f09060;--accent-light:#281a0e;
+  --green:#3da862;--green-light:#0c1e12;--red:#e04848;--red-light:#1e0c0c;
+  --blue:#4e78d0;--blue-light:#0c1628;--gold:#d4a020;--gold-light:#1e1400;
+  --purple:#9060d0;--purple-light:#18102a;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.2),0 2px 8px rgba(0,0,0,0.15);
+  --shadow:0 1px 3px rgba(0,0,0,0.25),0 4px 16px rgba(0,0,0,0.18);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:14px;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;transition:background var(--tr),color var(--tr);-webkit-font-smoothing:antialiased;}
+.wrap{max-width:1000px;margin:0 auto;padding:28px 24px 80px;}
+/* HEADER */
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.top-left{display:flex;align-items:center;gap:12px;}
+.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;flex-shrink:0;}
+.top-title{font-family:var(--font-serif);font-size:22px;letter-spacing:-0.3px;}
+.top-sub{font-size:11.5px;color:var(--text3);margin-top:1px;}
+.back-link{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;color:var(--text2);background:var(--bg2);border:1px solid var(--border);text-decoration:none;transition:all var(--tr);}
+.back-link:hover{background:var(--border);color:var(--text);}
+.dark-toggle{padding:9px 12px;border-radius:var(--radius-sm);background:var(--bg2);border:1px solid var(--border);cursor:pointer;font-size:14px;margin-left:8px;}
+/* PAGE TITLE */
+.page-title{font-family:var(--font-serif);font-size:26px;letter-spacing:-0.5px;margin-bottom:4px;}
+.page-sub{font-size:13px;color:var(--text3);margin-bottom:24px;}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px;transition:background var(--tr),border-color var(--tr);}
+.card-title{font-size:14.5px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.card-desc{font-size:12px;color:var(--text3);margin-bottom:16px;}
+/* FORM CONTROLS */
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:0.03em;}
+.form-control{padding:9px 12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius-xs);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;transition:all var(--tr);outline:none;}
+.form-control:focus{border-color:var(--accent);background:var(--surface);}
+.preset-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.preset-btn{padding:6px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);transition:all var(--tr);}
+.preset-btn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+/* RESULT DISPLAY */
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:4px;}
+.result-stat{background:var(--bg2);border-radius:var(--radius-xs);padding:14px 16px;}
+.result-label{font-size:10.5px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
+.result-value{font-family:var(--font-serif);font-size:22px;letter-spacing:-0.5px;}
+.result-value.pos{color:var(--green);}
+.result-value.neg{color:var(--red);}
+/* TABLE */
+.table-wrap{overflow-x:auto;margin-top:14px;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:10.5px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--bg2);}
+.td-mono{font-variant-numeric:tabular-nums;font-weight:600;}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:600;}
+.badge-green{background:var(--green-light);color:var(--green);}
+.badge-red{background:var(--red-light);color:var(--red);}
+.badge-blue{background:var(--blue-light);color:var(--blue);}
+.badge-gold{background:var(--gold-light);color:var(--gold);}
+.badge-purple{background:var(--purple-light);color:var(--purple);}
+.badge-gray{background:var(--bg2);color:var(--text2);}
+/* EMPTY */
+.empty-state{text-align:center;padding:32px 16px;color:var(--text3);font-size:13px;}
+/* MISC */
+.text-sm{font-size:11.5px;color:var(--text3);}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+@media(max-width:640px){
+  .wrap{padding:18px 14px 60px;}
+  .form-row{grid-template-columns:1fr 1fr;}
+  .result-grid{grid-template-columns:1fr 1fr;}
+  .top-title{font-size:18px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="top-bar">
+  <div class="top-left">
+    <div class="logo-icon">F</div>
+    <div><div class="top-title">Reports</div><div class="top-sub">Portfolio insights &amp; lookups</div></div>
+  </div>
+  <div style="display:flex;align-items:center;">
+    <a href="index.html" class="back-link">← Back to Finflow</a>
+    <button class="dark-toggle" onclick="toggleDark()" id="dark-btn">☾</button>
+  </div>
+</div>
+
+<div class="page-title">Ask your data</div>
+<div class="page-sub">Query your financial history — spending, income, investments, and net worth over any period.</div>
+
+<!-- ═══ 1. SPENDING LOOKUP ═══ -->
+<div class="card">
+  <div class="card-title">💸 Spending Lookup</div>
+  <div class="card-desc">Total spending for any category, sub-category, or all expenses over a chosen period.</div>
+  <div class="preset-row" id="sl-presets"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Category</label>
+      <select class="form-control" id="sl-cat" onchange="updateSLSubcat();runSpendingLookup()">
+        <option value="">All Categories</option>
+        <option>Fixed</option><option>Lifestyle</option><option>Health</option><option>Financial</option><option>Misc</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Sub-category</label>
+      <select class="form-control" id="sl-subcat" onchange="runSpendingLookup()"><option value="">All</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">From</label><input class="form-control" type="date" id="sl-from" onchange="clearSLPreset();runSpendingLookup()"></div>
+    <div class="form-group"><label class="form-label">To</label><input class="form-control" type="date" id="sl-to" onchange="clearSLPreset();runSpendingLookup()"></div>
+  </div>
+  <div id="sl-result"></div>
+</div>
+
+<!-- ═══ 2. INCOME LOOKUP ═══ -->
+<div class="card">
+  <div class="card-title">💰 Income Lookup</div>
+  <div class="card-desc">Total income by source over a chosen period.</div>
+  <div class="preset-row" id="il-presets"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Source</label>
+      <select class="form-control" id="il-source" onchange="runIncomeLookup()">
+        <option value="">All Sources</option>
+        <option>Salary</option><option>Bonus</option><option>Freelance</option><option>Dividend</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">From</label><input class="form-control" type="date" id="il-from" onchange="clearILPreset();runIncomeLookup()"></div>
+    <div class="form-group"><label class="form-label">To</label><input class="form-control" type="date" id="il-to" onchange="clearILPreset();runIncomeLookup()"></div>
+  </div>
+  <div id="il-result"></div>
+</div>
+
+<!-- ═══ 3. INVESTMENT GROWTH ═══ -->
+<div class="card">
+  <div class="card-title">📈 Investment Growth</div>
+  <div class="card-desc">How much an investment (or your whole portfolio) has grown, with annualised return.</div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Investment</label>
+      <select class="form-control" id="ig-inv" onchange="runInvestmentGrowth()"><option value="">All Investments</option></select>
+    </div>
+  </div>
+  <div id="ig-result"></div>
+</div>
+
+<!-- ═══ 4. NET WORTH CHANGE ═══ -->
+<div class="card">
+  <div class="card-title">📊 Net Worth Change</div>
+  <div class="card-desc">How your net worth has changed between two points in time, with breakdown.</div>
+  <div class="preset-row" id="nw-presets"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">From</label><input class="form-control" type="date" id="nw-from" onchange="clearNWPreset();runNWChange()"></div>
+    <div class="form-group"><label class="form-label">To</label><input class="form-control" type="date" id="nw-to" onchange="clearNWPreset();runNWChange()"></div>
+  </div>
+  <div id="nw-result"></div>
+</div>
+
+<!-- ═══ 5. CATEGORY TRENDS ═══ -->
+<div class="card">
+  <div class="card-title">📉 Category Trends</div>
+  <div class="card-desc">Monthly spending trend for a category over the last 12 cycles.</div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Category</label>
+      <select class="form-control" id="ct-cat" onchange="runCategoryTrend()">
+        <option value="">All Categories</option>
+        <option>Fixed</option><option>Lifestyle</option><option>Health</option><option>Financial</option><option>Misc</option>
+      </select>
+    </div>
+  </div>
+  <div style="height:220px;position:relative;margin-top:8px;"><canvas id="ct-chart"></canvas></div>
+</div>
+
+<!-- ═══ 6. PERIOD SUMMARY ═══ -->
+<div class="card">
+  <div class="card-title">📋 Period Summary</div>
+  <div class="card-desc">A mini financial statement for any custom date range — income, expenses, savings, and category breakdown.</div>
+  <div class="preset-row" id="ps-presets"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">From</label><input class="form-control" type="date" id="ps-from" onchange="clearPSPreset();runPeriodSummary()"></div>
+    <div class="form-group"><label class="form-label">To</label><input class="form-control" type="date" id="ps-to" onchange="clearPSPreset();runPeriodSummary()"></div>
+  </div>
+  <div id="ps-result"></div>
+</div>
+
+</div>
+<script>
+// ═══ DATA LAYER (read-only, shares storage with index.html) ═══
+const DB={get(k,d=[]){try{return JSON.parse(localStorage.getItem('ff_'+k)||JSON.stringify(d));}catch{return d;}}};
+let accounts=DB.get('accounts'),incomes=DB.get('incomes'),expenses=DB.get('expenses');
+let investments=DB.get('investments'),loans=DB.get('loans');
+let settings=DB.get('settings',{dark:false,salaryDay:30});
+let nwHistory=DB.get('nwHistory',{});
+
+// ═══ UTILS (same as index.html) ═══
+function fmt(n){return '₹'+(+n||0).toLocaleString('en-IN',{maximumFractionDigits:0});}
+function pct(n){return(n||0).toFixed(1)+'%';}
+function today(){return new Date().toISOString().slice(0,10);}
+function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
+function fmtDateShort(s){if(!s)return'—';return new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});}
+function monthKey(s){return s?s.slice(0,7):'';}
+function monthLabel(k){if(!k)return'';const[y,m]=k.split('-');return new Date(y,m-1).toLocaleString('en-IN',{month:'short',year:'numeric'});}
+function getFY(ds){const d=new Date(ds),y=d.getFullYear(),m=d.getMonth(),s=m>=3?y:y-1;return'FY '+s+'-'+String(s+1).slice(2);}
+
+// ═══ FD/PF/PPF VALUE HELPERS (same logic as index.html) ═══
+function calcFDValue(p,r,n,s,as){if(!p||!r||!s||!as)return p||0;const t=Math.max(0,(new Date(as)-new Date(s))/(365.25*24*3600*1000));return p*Math.pow(1+r/100/n,n*t);}
+function calcPPFCorpus(inv,asOf){
+  if(!inv.isPFPPF||inv.type!=='PPF')return inv.current||0;
+  const rate=(inv.pfppfRate||7.1)/100,openDate=new Date(inv.pfppfDate||new Date()),asOfD=asOf?new Date(asOf):new Date();
+  let corpus=inv.invested||0;
+  const contribs=(inv.ppfContributions||[]).filter(c=>new Date(c.date)>openDate&&new Date(c.date)<=asOfD).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const interestDates=[];let yr=openDate.getFullYear();
+  while(true){const m31=new Date(yr,2,31);if(m31>openDate&&m31<=asOfD)interestDates.push(m31);if(m31>asOfD)break;yr++;}
+  const events=[...contribs.map(c=>({date:new Date(c.date),type:'c',amount:c.amount})),...interestDates.map(d=>({date:d,type:'i'}))].sort((a,b)=>a.date-b.date);
+  let lastDate=openDate;
+  for(const ev of events){if(ev.type==='i')corpus+=corpus*rate;else corpus+=ev.amount;lastDate=ev.date;}
+  const dsl=(asOfD-lastDate)/(365.25*24*3600*1000);
+  if(dsl>0&&interestDates.length>0)corpus+=corpus*rate*dsl;
+  return corpus;
+}
+function getFDCurrentValue(x,asOf){
+  asOf=asOf||today();
+  if(x.isFD&&x.fdStart&&x.fdMaturity&&x.fdRate){
+    if(x.fdNonCumulative)return x.invested;
+    const matDate=new Date(x.fdMaturity);
+    if(new Date(asOf)>=matDate)return x.fdMaturityValue||calcFDValue(x.invested,x.fdRate,x.fdCompound||4,x.fdStart,x.fdMaturity);
+    return calcFDValue(x.invested,x.fdRate,x.fdCompound||4,x.fdStart,asOf);
+  }
+  if(x.isPFPPF){
+    if(x.type==='PPF')return calcPPFCorpus(x,asOf);
+    if(x.pfppfRate&&x.pfppfDate){const t=Math.max(0,(new Date(asOf)-new Date(x.pfppfDate))/(365.25*24*3600*1000));return x.invested*Math.pow(1+x.pfppfRate/100,t);}
+  }
+  return x.current||0;
+}
+
+// ═══ DARK MODE ═══
+function applyDark(){
+  document.documentElement.setAttribute('data-theme',settings.dark?'dark':'');
+  document.getElementById('dark-btn').textContent=settings.dark?'☀':'☾';
+  // Redraw chart with new colors
+  if(window._ctChart)runCategoryTrend();
+}
+function toggleDark(){
+  settings.dark=!settings.dark;
+  localStorage.setItem('ff_settings',JSON.stringify(settings));
+  applyDark();
+}
+
+// ═══ SUBCATEGORY MAP (same as index.html) ═══
+const subCats={
+  Fixed:['Rent','Home Loan EMI','Utilities','Mobile/Internet','Subscriptions/OTT','Insurance','Other'],
+  Lifestyle:['Food & Dining','Commute/Transport','Travel','Shopping','Entertainment','Personal Care','Home & Decor','Gym/Sports','Other'],
+  Health:['Doctor/Consultation','Medicines','Diagnostics','Health Insurance','Other'],
+  Financial:['EMI','Loan Prepayment','Credit Card Payment','Investments','Tax','Other'],
+  Misc:['Gifts','Charity/Donations','Professional Expenses','Kids/Education','Pet','Random','Other']
+};
+
+// ═══ DATE PRESETS ═══
+function getDateRange(preset){
+  const now=new Date();
+  const today_=now.toISOString().slice(0,10);
+  switch(preset){
+    case 'this-month':{
+      const start=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
+      return [start,today_];
+    }
+    case 'last-month':{
+      const start=new Date(now.getFullYear(),now.getMonth()-1,1).toISOString().slice(0,10);
+      const end=new Date(now.getFullYear(),now.getMonth(),0).toISOString().slice(0,10);
+      return [start,end];
+    }
+    case 'last-3-months':{
+      const start=new Date(now.getFullYear(),now.getMonth()-3,1).toISOString().slice(0,10);
+      return [start,today_];
+    }
+    case 'last-6-months':{
+      const start=new Date(now.getFullYear(),now.getMonth()-6,1).toISOString().slice(0,10);
+      return [start,today_];
+    }
+    case 'this-fy':{
+      const fyStartYear=now.getMonth()>=3?now.getFullYear():now.getFullYear()-1;
+      const start=new Date(fyStartYear,3,1).toISOString().slice(0,10);
+      return [start,today_];
+    }
+    case 'last-fy':{
+      const fyStartYear=(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1)-1;
+      const start=new Date(fyStartYear,3,1).toISOString().slice(0,10);
+      const end=new Date(fyStartYear+1,2,31).toISOString().slice(0,10);
+      return [start,end];
+    }
+    case 'all-time':{
+      const allDates=[...expenses,...incomes].map(x=>x.date).filter(Boolean).sort();
+      const start=allDates.length?allDates[0]:today_;
+      return [start,today_];
+    }
+    case 'this-year':{
+      const start=new Date(now.getFullYear(),0,1).toISOString().slice(0,10);
+      return [start,today_];
+    }
+  }
+  return [today_,today_];
+}
+
+const PRESETS=[
+  {id:'this-month',label:'This Month'},
+  {id:'last-month',label:'Last Month'},
+  {id:'last-3-months',label:'Last 3 Months'},
+  {id:'last-6-months',label:'Last 6 Months'},
+  {id:'this-fy',label:'This FY'},
+  {id:'last-fy',label:'Last FY'},
+  {id:'all-time',label:'All Time'},
+];
+
+function renderPresets(containerId, applyFn){
+  const el=document.getElementById(containerId);
+  el.innerHTML=PRESETS.map(p=>'<button class="preset-btn" data-preset="'+p.id+'" onclick="'+applyFn+'(\''+p.id+'\')">'+p.label+'</button>').join('');
+}
+
+function setPresetActive(containerId, presetId){
+  document.querySelectorAll('#'+containerId+' .preset-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.preset===presetId);
+  });
+}
+</script>
+<script>
+// ═══ 1. SPENDING LOOKUP ═══
+function updateSLSubcat(){
+  const cat=document.getElementById('sl-cat').value;
+  const sel=document.getElementById('sl-subcat');
+  const subs=subCats[cat]||[];
+  sel.innerHTML='<option value="">All</option>'+subs.map(s=>'<option>'+s+'</option>').join('');
+}
+
+function clearSLPreset(){ setPresetActive('sl-presets',null); }
+
+function applySLPreset(presetId){
+  const [from,to]=getDateRange(presetId);
+  document.getElementById('sl-from').value=from;
+  document.getElementById('sl-to').value=to;
+  setPresetActive('sl-presets',presetId);
+  runSpendingLookup();
+}
+
+function runSpendingLookup(){
+  const cat=document.getElementById('sl-cat').value;
+  const subcat=document.getElementById('sl-subcat').value;
+  const from=document.getElementById('sl-from').value;
+  const to=document.getElementById('sl-to').value;
+  const el=document.getElementById('sl-result');
+
+  let data=expenses.filter(x=>!x.isRecurring);
+  if(cat)data=data.filter(x=>x.category===cat);
+  if(subcat)data=data.filter(x=>x.subcategory===subcat);
+  if(from)data=data.filter(x=>x.date>=from);
+  if(to)data=data.filter(x=>x.date<=to);
+
+  if(!data.length){
+    el.innerHTML='<div class="empty-state">No expenses found for this selection.</div>';
+    return;
+  }
+
+  const total=data.reduce((s,x)=>s+x.amount,0);
+  const count=data.length;
+  // Calculate months spanned
+  const dates=data.map(x=>x.date).sort();
+  const monthsSpan=Math.max(1,Math.round((new Date(dates[dates.length-1])-new Date(dates[0]))/(30.44*24*3600*1000))+1);
+  const avgMonth=total/monthsSpan;
+
+  const top=[...data].sort((a,b)=>b.amount-a.amount).slice(0,5);
+
+  el.innerHTML='<div class="result-grid">'
+    +'<div class="result-stat"><div class="result-label">Total</div><div class="result-value">'+fmt(total)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Transactions</div><div class="result-value">'+count+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Avg / Month</div><div class="result-value">'+fmt(avgMonth)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Period</div><div class="result-value" style="font-size:14px;">'+fmtDateShort(dates[0])+' – '+fmtDateShort(dates[dates.length-1])+'</div></div>'
+    +'</div>'
+    +'<div class="table-wrap"><table><thead><tr><th>Date</th><th>Sub-category</th><th>Description</th><th style="text-align:right;">Amount</th></tr></thead><tbody>'
+    +top.map(x=>'<tr><td>'+fmtDate(x.date)+'</td><td>'+x.subcategory+'</td><td>'+(x.desc||'—')+'</td><td class="td-mono" style="text-align:right;">'+fmt(x.amount)+'</td></tr>').join('')
+    +'</tbody></table></div>'
+    +'<div class="text-sm" style="margin-top:8px;">Showing top 5 of '+count+' transactions by amount.</div>';
+}
+
+// ═══ 2. INCOME LOOKUP ═══
+function clearILPreset(){ setPresetActive('il-presets',null); }
+
+function applyILPreset(presetId){
+  const [from,to]=getDateRange(presetId);
+  document.getElementById('il-from').value=from;
+  document.getElementById('il-to').value=to;
+  setPresetActive('il-presets',presetId);
+  runIncomeLookup();
+}
+
+function runIncomeLookup(){
+  const source=document.getElementById('il-source').value;
+  const from=document.getElementById('il-from').value;
+  const to=document.getElementById('il-to').value;
+  const el=document.getElementById('il-result');
+
+  let data=incomes.filter(x=>!x.isRecurring);
+  if(source)data=data.filter(x=>x.source===source);
+  if(from)data=data.filter(x=>x.date>=from);
+  if(to)data=data.filter(x=>x.date<=to);
+
+  if(!data.length){
+    el.innerHTML='<div class="empty-state">No income found for this selection.</div>';
+    return;
+  }
+
+  const total=data.reduce((s,x)=>s+x.amount,0);
+  const count=data.length;
+  const dates=data.map(x=>x.date).sort();
+  const monthsSpan=Math.max(1,Math.round((new Date(dates[dates.length-1])-new Date(dates[0]))/(30.44*24*3600*1000))+1);
+  const avgMonth=total/monthsSpan;
+
+  // Breakdown by source if "All" selected
+  let breakdownHtml='';
+  if(!source){
+    const bySource={};
+    data.forEach(x=>{bySource[x.source]=(bySource[x.source]||0)+x.amount;});
+    const rows=Object.entries(bySource).sort((a,b)=>b[1]-a[1]);
+    breakdownHtml='<div class="table-wrap"><table><thead><tr><th>Source</th><th style="text-align:right;">Total</th><th style="text-align:right;">% of Total</th></tr></thead><tbody>'
+      +rows.map(([src,amt])=>'<tr><td>'+src+'</td><td class="td-mono" style="text-align:right;">'+fmt(amt)+'</td><td style="text-align:right;">'+pct(amt/total*100)+'</td></tr>').join('')
+      +'</tbody></table></div>';
+  }
+
+  el.innerHTML='<div class="result-grid">'
+    +'<div class="result-stat"><div class="result-label">Total</div><div class="result-value pos">'+fmt(total)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Transactions</div><div class="result-value">'+count+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Avg / Month</div><div class="result-value">'+fmt(avgMonth)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Period</div><div class="result-value" style="font-size:14px;">'+fmtDateShort(dates[0])+' – '+fmtDateShort(dates[dates.length-1])+'</div></div>'
+    +'</div>'+breakdownHtml;
+}
+
+// ═══ 3. INVESTMENT GROWTH ═══
+function populateInvestmentSelect(){
+  const sel=document.getElementById('ig-inv');
+  sel.innerHTML='<option value="">All Investments (Portfolio)</option>'
+    +investments.map(x=>'<option value="'+x.id+'">'+x.name+' ('+x.type+')</option>').join('');
+}
+
+function runInvestmentGrowth(){
+  const invId=document.getElementById('ig-inv').value;
+  const el=document.getElementById('ig-result');
+
+  if(!investments.length){
+    el.innerHTML='<div class="empty-state">No investments added yet.</div>';
+    return;
+  }
+
+  let totalInvested=0,totalCurrent=0,earliestDate=null;
+
+  if(invId){
+    const inv=investments.find(x=>x.id===invId);
+    if(!inv){el.innerHTML='<div class="empty-state">Investment not found.</div>';return;}
+    totalInvested=inv.invested||0;
+    totalCurrent=getFDCurrentValue(inv);
+    earliestDate=inv.purchaseDate||inv.fdStart||inv.pfppfDate||null;
+  } else {
+    investments.forEach(inv=>{
+      totalInvested+=inv.invested||0;
+      totalCurrent+=getFDCurrentValue(inv);
+      const d=inv.purchaseDate||inv.fdStart||inv.pfppfDate;
+      if(d&&(!earliestDate||d<earliestDate))earliestDate=d;
+    });
+  }
+
+  const gain=totalCurrent-totalInvested;
+  const gainPct=totalInvested?(gain/totalInvested*100):0;
+
+  // CAGR
+  let cagr=null;
+  if(earliestDate){
+    const years=(new Date()-new Date(earliestDate))/(365.25*24*3600*1000);
+    if(years>0.1&&totalInvested>0){
+      cagr=(Math.pow(totalCurrent/totalInvested,1/years)-1)*100;
+    }
+  }
+
+  el.innerHTML='<div class="result-grid">'
+    +'<div class="result-stat"><div class="result-label">Invested</div><div class="result-value">'+fmt(totalInvested)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Current Value</div><div class="result-value">'+fmt(totalCurrent)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Gain</div><div class="result-value '+(gain>=0?'pos':'neg')+'">'+(gain>=0?'+':'')+fmt(gain)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Return</div><div class="result-value '+(gainPct>=0?'pos':'neg')+'">'+(gainPct>=0?'+':'')+pct(gainPct)+'</div></div>'
+    +(cagr!==null?'<div class="result-stat"><div class="result-label">CAGR</div><div class="result-value '+(cagr>=0?'pos':'neg')+'">'+(cagr>=0?'+':'')+pct(cagr)+'</div></div>':'')
+    +(earliestDate?'<div class="result-stat"><div class="result-label">Since</div><div class="result-value" style="font-size:14px;">'+fmtDate(earliestDate)+'</div></div>':'')
+    +'</div>';
+}
+
+// ═══ 4. NET WORTH CHANGE ═══
+function clearNWPreset(){ setPresetActive('nw-presets',null); }
+
+function applyNWPreset(presetId){
+  const [from,to]=getDateRange(presetId);
+  document.getElementById('nw-from').value=from;
+  document.getElementById('nw-to').value=to;
+  setPresetActive('nw-presets',presetId);
+  runNWChange();
+}
+
+function findClosestSnapshot(targetDate){
+  const keys=Object.keys(nwHistory).sort();
+  if(!keys.length)return null;
+  const target=new Date(targetDate+'T23:59:59');
+  let best=null,bestDiff=Infinity;
+  keys.forEach(k=>{
+    const kd=new Date(k);
+    if(kd<=target){
+      const diff=target-kd;
+      if(diff<bestDiff){bestDiff=diff;best=k;}
+    }
+  });
+  // If nothing before target, use earliest available
+  if(!best)best=keys[0];
+  return {key:best,data:nwHistory[best]};
+}
+
+function runNWChange(){
+  const from=document.getElementById('nw-from').value;
+  const to=document.getElementById('nw-to').value;
+  const el=document.getElementById('nw-result');
+
+  if(!Object.keys(nwHistory).length){
+    el.innerHTML='<div class="empty-state">No net worth history yet — keep using Finflow and snapshots will accumulate.</div>';
+    return;
+  }
+  if(!from||!to){
+    el.innerHTML='<div class="empty-state">Select a date range, or use a preset above.</div>';
+    return;
+  }
+
+  const fromSnap=findClosestSnapshot(from);
+  const toSnap=findClosestSnapshot(to);
+
+  if(!fromSnap||!toSnap){
+    el.innerHTML='<div class="empty-state">Not enough history for this range yet.</div>';
+    return;
+  }
+
+  const fromNW=fromSnap.data.nw||0, toNW=toSnap.data.nw||0;
+  const change=toNW-fromNW;
+  const changePct=fromNW?(change/fromNW*100):0;
+
+  const accChange=(toSnap.data.acc||0)-(fromSnap.data.acc||0);
+  const invChange=(toSnap.data.inv||0)-(fromSnap.data.inv||0);
+  const loanChange=(toSnap.data.loan||0)-(fromSnap.data.loan||0);
+
+  el.innerHTML='<div class="result-grid">'
+    +'<div class="result-stat"><div class="result-label">From ('+fmtDateShort(fromSnap.key)+')</div><div class="result-value">'+fmt(fromNW)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">To ('+fmtDateShort(toSnap.key)+')</div><div class="result-value">'+fmt(toNW)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Change</div><div class="result-value '+(change>=0?'pos':'neg')+'">'+(change>=0?'+':'')+fmt(change)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">% Change</div><div class="result-value '+(changePct>=0?'pos':'neg')+'">'+(changePct>=0?'+':'')+pct(changePct)+'</div></div>'
+    +'</div>'
+    +'<div class="divider"></div>'
+    +'<div class="text-sm" style="margin-bottom:8px;font-weight:600;">What drove the change:</div>'
+    +'<div class="table-wrap"><table><thead><tr><th>Component</th><th style="text-align:right;">Change</th></tr></thead><tbody>'
+    +'<tr><td>Accounts (Bank/Wallet/Cash)</td><td class="td-mono '+(accChange>=0?'':'')+'" style="text-align:right;color:'+(accChange>=0?'var(--green)':'var(--red)')+';">'+(accChange>=0?'+':'')+fmt(accChange)+'</td></tr>'
+    +'<tr><td>Investments</td><td class="td-mono" style="text-align:right;color:'+(invChange>=0?'var(--green)':'var(--red)')+';">'+(invChange>=0?'+':'')+fmt(invChange)+'</td></tr>'
+    +'<tr><td>Loans Outstanding</td><td class="td-mono" style="text-align:right;color:'+(loanChange<=0?'var(--green)':'var(--red)')+';">'+(loanChange>=0?'+':'')+fmt(loanChange)+(loanChange<0?' (paid down)':'')+'</td></tr>'
+    +'</tbody></table></div>';
+}
+</script>
+<script>
+// ═══ 5. CATEGORY TRENDS ═══
+function runCategoryTrend(){
+  const cat=document.getElementById('ct-cat').value;
+  const canvas=document.getElementById('ct-chart');
+
+  // Build last 12 month buckets
+  const now=new Date();
+  const months=[];
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push(d.toISOString().slice(0,7));
+  }
+
+  let data=expenses.filter(x=>!x.isRecurring);
+  if(cat)data=data.filter(x=>x.category===cat);
+
+  const totals=months.map(mk=>{
+    return data.filter(x=>monthKey(x.date)===mk).reduce((s,x)=>s+x.amount,0);
+  });
+
+  const labels=months.map(monthLabel);
+
+  // Get theme colors
+  const isDark=settings.dark;
+  const gridColor=isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)';
+  const textColor=isDark?'#9e9688':'#a09890';
+  const barColor=isDark?'#e07840':'#c8622a';
+
+  if(window._ctChart)window._ctChart.destroy();
+
+  if(!data.length){
+    canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+    window._ctChart=null;
+    return;
+  }
+
+  window._ctChart=new Chart(canvas,{
+    type:'bar',
+    data:{
+      labels:labels,
+      datasets:[{
+        label:cat||'All Categories',
+        data:totals,
+        backgroundColor:barColor,
+        borderRadius:5,
+        maxBarThickness:36
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>fmt(ctx.parsed.y)}}},
+      scales:{
+        y:{beginAtZero:true,grid:{color:gridColor},ticks:{color:textColor,callback:(v)=>'₹'+(v/1000)+'k'}},
+        x:{grid:{display:false},ticks:{color:textColor}}
+      }
+    }
+  });
+}
+
+// ═══ 6. PERIOD SUMMARY ═══
+function clearPSPreset(){ setPresetActive('ps-presets',null); }
+
+function applyPSPreset(presetId){
+  const [from,to]=getDateRange(presetId);
+  document.getElementById('ps-from').value=from;
+  document.getElementById('ps-to').value=to;
+  setPresetActive('ps-presets',presetId);
+  runPeriodSummary();
+}
+
+function runPeriodSummary(){
+  const from=document.getElementById('ps-from').value;
+  const to=document.getElementById('ps-to').value;
+  const el=document.getElementById('ps-result');
+
+  if(!from||!to){
+    el.innerHTML='<div class="empty-state">Select a date range, or use a preset above.</div>';
+    return;
+  }
+
+  const incData=incomes.filter(x=>!x.isRecurring&&x.date>=from&&x.date<=to);
+  const expData=expenses.filter(x=>!x.isRecurring&&x.date>=from&&x.date<=to);
+
+  const totalInc=incData.reduce((s,x)=>s+x.amount,0);
+  const totalExp=expData.reduce((s,x)=>s+x.amount,0);
+  const savings=totalInc-totalExp;
+  const savingsRate=totalInc?(savings/totalInc*100):0;
+
+  // Category breakdown
+  const byCat={};
+  expData.forEach(x=>{byCat[x.category]=(byCat[x.category]||0)+x.amount;});
+  const catRows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+
+  const catColors={Fixed:'badge-blue',Lifestyle:'badge-gold',Health:'badge-red',Financial:'badge-green',Misc:'badge-purple'};
+
+  el.innerHTML='<div class="result-grid">'
+    +'<div class="result-stat"><div class="result-label">Total Income</div><div class="result-value pos">'+fmt(totalInc)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Total Expenses</div><div class="result-value neg">'+fmt(totalExp)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Savings</div><div class="result-value '+(savings>=0?'pos':'neg')+'">'+(savings>=0?'+':'')+fmt(savings)+'</div></div>'
+    +'<div class="result-stat"><div class="result-label">Savings Rate</div><div class="result-value '+(savingsRate>=0?'pos':'neg')+'">'+pct(savingsRate)+'</div></div>'
+    +'</div>'
+    +(catRows.length?'<div class="divider"></div><div class="text-sm" style="margin-bottom:8px;font-weight:600;">Expense breakdown by category:</div>'
+    +'<div class="table-wrap"><table><thead><tr><th>Category</th><th style="text-align:right;">Amount</th><th style="text-align:right;">% of Expenses</th></tr></thead><tbody>'
+    +catRows.map(([c,amt])=>'<tr><td><span class="badge '+(catColors[c]||'badge-gray')+'">'+c+'</span></td><td class="td-mono" style="text-align:right;">'+fmt(amt)+'</td><td style="text-align:right;">'+pct(amt/totalExp*100)+'</td></tr>').join('')
+    +'</tbody></table></div>':'');
+}
+
+// ═══ INIT ═══
+function init(){
+  applyDark();
+  renderPresets('sl-presets','applySLPreset');
+  renderPresets('il-presets','applyILPreset');
+  renderPresets('nw-presets','applyNWPreset');
+  renderPresets('ps-presets','applyPSPreset');
+  populateInvestmentSelect();
+
+  // Default: this month for spending/income/period summary
+  applySLPreset('this-month');
+  applyILPreset('this-month');
+  applyPSPreset('this-month');
+  // Net worth: this month vs last month by default
+  applyNWPreset('last-month');
+  runInvestmentGrowth();
+  runCategoryTrend();
+}
+
+init();
+</script>
+</body>
+</html>
