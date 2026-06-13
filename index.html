@@ -561,6 +561,7 @@ tbody tr:hover td{background:var(--bg2);}
     <button class="nav-item" onclick="navigate('calendar')"><span class="nav-icon">▦</span>Bill Calendar</button>
     <button class="nav-item" onclick="navigate('tax')"><span class="nav-icon">◧</span>Tax Overview</button>
     <button class="nav-item" onclick="navigate('planning')"><span class="nav-icon">◎</span>Goals &amp; Income</button>
+    <a href="reports.html" class="nav-item" style="text-decoration:none;"><span class="nav-icon">⊞</span>Reports</a>
   </nav>
   <div class="sidebar-footer">
     <div class="save-row"><span class="save-dot" id="save-dot"></span><span class="save-label" id="save-label">Not saved yet</span></div>
@@ -581,7 +582,6 @@ tbody tr:hover td{background:var(--bg2);}
     <button class="footer-btn" onclick="document.getElementById('import-file').click()"><span>↑</span> Import Backup</button>
     <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
     <button class="footer-btn" onclick="toggleDark()"><span id="dark-icon">☾</span><span id="dark-label"> Dark Mode</span></button>
-    <a href="reports.html" class="footer-btn" style="text-decoration:none;display:flex;"><span>📊</span> Reports</a>
   </div>
 </aside>
 
