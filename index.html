@@ -581,6 +581,7 @@ tbody tr:hover td{background:var(--bg2);}
     <button class="footer-btn" onclick="document.getElementById('import-file').click()"><span>↑</span> Import Backup</button>
     <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
     <button class="footer-btn" onclick="toggleDark()"><span id="dark-icon">☾</span><span id="dark-label"> Dark Mode</span></button>
+    <a href="reports.html" class="footer-btn" style="text-decoration:none;display:flex;"><span>📊</span> Reports</a>
   </div>
 </aside>
 
@@ -912,6 +913,10 @@ tbody tr:hover td{background:var(--bg2);}
   <div class="card mb16">
     <div class="section-hdr"><div class="section-title">🎨 Appearance</div></div>
     <button class="btn btn-ghost" style="justify-content:flex-start;width:100%;" onclick="toggleDark();updateMoreDarkLabel()"><span id="more-dark-icon">☾</span> <span id="more-dark-label">Dark Mode</span></button>
+  </div>
+  <div class="card mb16">
+    <div class="section-hdr"><div class="section-title">📊 Reports</div></div>
+    <a href="reports.html" class="btn btn-ghost" style="justify-content:flex-start;width:100%;text-decoration:none;display:flex;">📊 Portfolio Insights &amp; Lookups →</a>
   </div>
   <div class="card mb16">
     <div class="section-hdr"><div class="section-title">📋 Planning</div></div>
